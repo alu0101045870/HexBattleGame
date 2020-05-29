@@ -183,26 +183,30 @@ public class Caroussel : MonoBehaviour
     }
 
     // ---------------------------------------------------------------------------------------
-    /*                                  ACCESS METHODS                                      */
+    /*                                       NEXT TURN                                      */
     // ---------------------------------------------------------------------------------------
 
-    public IEnumerator NextTurn(Dictionary<Vector2Int, GameObject> mapTiles)
+    public IEnumerator NextTurn()
     {
         // Get the next turn owner
         IGameCharacter turnOwner = NextTurnOwner();
         int actions = turnOwner.GetStatValueByName("ACT");
-        bool hasMoved = false;
+
+        // TODO: Future check actions and status ailments here 
+        // -----
+
+        turnOwner.HasMoved = false;
+
+        // -----
 
         // ACT actions need to be performed during this turn
         for (int i = 0; i < actions; i++)
         {
-            turnOwner.ChooseAction(mapTiles, hasMoved);
-
             // Execute chosen action and wait till its end
-            StartCoroutine(turnOwner.Action(mapTiles));
-        }
+            turnOwner.RequestAct();
 
-        yield return null;
+            yield return new WaitForSeconds(1f);
+        }
     }
 
 }

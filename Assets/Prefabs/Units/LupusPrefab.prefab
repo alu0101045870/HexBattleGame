@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 2173625818032979716}
   - component: {fileID: 2173625818032979718}
   m_Layer: 0
-  m_Name: EnemyPrefab
+  m_Name: LupusPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

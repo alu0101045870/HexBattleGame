@@ -126,11 +126,11 @@ public static class HexCalculator
                 Vector2Int temp = key + dir;
                 if (tiles.TryGetValue(temp, out tile))
                 {
-                    Debug.Log(key + " + " + dir + " := " + tile.GetComponent<HexTile>().Position);
+                    //Debug.Log(key + " + " + dir + " := " + tile.GetComponent<HexTile>().Position);
                     tiles[key].GetComponent<HexTile>().AddNeighbor(tile);
                 }
             }
-            Debug.LogWarning("------------------------");
+            //Debug.LogWarning("------------------------");
         }
     }
 }

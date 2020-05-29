@@ -6,11 +6,27 @@ using UnityEngine;
 
 public class BattleMap : MonoBehaviour
 {
+    public static BattleMap Instance { get; private set; }
+
     public GameObject hexTilePrefab;
     public List<TextAsset> mapFiles;
     public Caroussel turnCaroussel;
 
-    private Dictionary<Vector2Int, GameObject> mapTiles = new Dictionary<Vector2Int, GameObject>();
+    public Dictionary<Vector2Int, GameObject> mapTiles = new Dictionary<Vector2Int, GameObject>();
+
+    private void Awake()
+    {
+        // Singleton pattern implementation: no more than a single instance of BattleMap on scene
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Start()
     {
@@ -21,6 +37,7 @@ public class BattleMap : MonoBehaviour
 
         //StartCoroutine(GameLoop());
     }
+
     private void InitMap()
     {
         string[] mapData = mapFiles[UnityEngine.Random.Range(0, mapFiles.Count)].text.Split(' ', '\n');
@@ -90,7 +107,7 @@ public class BattleMap : MonoBehaviour
 
         while(!stopCondition)          // Take turns eternally
         {
-            yield return StartCoroutine(turnCaroussel.NextTurn(mapTiles));
+            yield return StartCoroutine(turnCaroussel.NextTurn());
 
             stopCondition = true;
         }

@@ -11,6 +11,7 @@ public interface IGameCharacter
     int LastSkillRank { get; set; }
     string Name { get; set; }
     List<Skill> Skillset { get; set; }
+    bool HasMoved { get; set; }
 
     float GetStatusEffectByName(string name);
     void SetStatusEffectByName(string name, float value);
@@ -23,8 +24,7 @@ public interface IGameCharacter
 
     void DetectUnitsOfInterest();
 
-    void ChooseAction(Dictionary<Vector2Int, GameObject> mapTiles, bool hasMoved);
-    IEnumerator Action(Dictionary<Vector2Int, GameObject> mapTiles);
+    void RequestAct();
 }
 
 // EVALUATE CHANGING ALL REFERENCES OF TYPE List<GameObject> TO List<IGameCharacter> if possible
@@ -45,6 +45,7 @@ public abstract class InGameCharacter : IGameCharacter
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
 
     private List<Skill> skill_set_ = new List<Skill>();
+    private bool hasMoved_;
 
     public int TickSpeed { 
         get { return tickSpeed_; } 
@@ -65,6 +66,7 @@ public abstract class InGameCharacter : IGameCharacter
     }
     public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
     public List<Skill> Skillset { get => skill_set_; set => skill_set_ = value; }
+    public bool HasMoved { get => hasMoved_; set => hasMoved_ = value; }
 
     public float GetStatusEffectByName(string name)
     {
@@ -121,15 +123,10 @@ public abstract class InGameCharacter : IGameCharacter
     {
         throw new NotImplementedException();
     }
-    public IEnumerator Action(Dictionary<Vector2Int, GameObject> mapTiles)
+    public void RequestAct()
     {
         throw new NotImplementedException();
     }
-    public void ChooseAction(Dictionary<Vector2Int, GameObject> mapTiles, bool hasMoved)
-    {
-        throw new NotImplementedException();
-    }
-
     // ------------------------------------------------------------------------------------------------------//
     /*                                     Specific to base class                                            */
     // ------------------------------------------------------------------------------------------------------//

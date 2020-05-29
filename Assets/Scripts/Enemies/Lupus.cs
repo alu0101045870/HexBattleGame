@@ -2,6 +2,7 @@
 using MLAgents;
 using System.Collections;
 using System.Collections.Generic;
+using MLAgents.Sensors;
 
 public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
 {
@@ -54,6 +55,10 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
     {
         get { return inheritedComponent_.Skillset; }
         set { inheritedComponent_.Skillset = value; }
+    }
+    public bool HasMoved { 
+        get { return inheritedComponent_.HasMoved; } 
+        set { inheritedComponent_.HasMoved = value; } 
     }
 
     public float GetStatusEffectByName(string name)
@@ -115,47 +120,76 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
     // ---------------------------------------------------------------------------------------
     /*                            AGENT ACTIONS IMPLEMENTATION                              */
     // ---------------------------------------------------------------------------------------
-    public IEnumerator Action(Dictionary<Vector2Int, GameObject> mapTiles)
+
+    public override void CollectObservations(VectorSensor sensor)
     {
-        //Debug.Log(usedSkill_.SkillName);
-        yield return StartCoroutine(usedSkill_.Exec(this, targets_));
-        yield return new WaitForSeconds(1f);
+        //
+
+        // Observations needed:
+        /*
+            - Some sort of knowledge of other units positions
+                + Could be an array indicating the hex distance between us
+                + Maybe filter out the non-relevant ones
+
+            - Have I already used my movement?   [BOOLEAN]
+            - My Status Effects
+            - My Stat Values
+            
+            - My Position ????
+         
+         
+         */
     }
 
-    // This method is where the agent decision takes place
-    // Somewhat like MLAgents Heuristic 
-    public void ChooseAction(Dictionary<Vector2Int, GameObject> mapTiles, bool hasMoved)
+    public override float[] Heuristic()
     {
+        var action = new float[11];     // [0] -> used skill // [1 - 10] -> targets
+
         // --------------------------------------------
-        foreach (Skill skill in Skillset)       // skill order comes into play
+
+
+        for (int i = 0; i < Skillset.Count; i++)
         {
-            //Debug.Log(skill.SkillName);
+            if (Skillset[i].AreTargetsInRange(GetInGamePosition(), preyList_, targets_))
+            { 
 
-            if (skill.SkillName.Equals("Move") && hasMoved)
-                continue;
-
-            // Priorities in target groups come into play
-            if (skill.AreTargetsInRange(GetInGamePosition(), mapTiles, preyList_, targets_)) {
-                usedSkill_ = skill;
-                return;
+                break;
             }
-
-            if(skill.AreTargetsInRange(GetInGamePosition(), mapTiles, playerList_, targets_))
+            else if (Skillset[i].AreTargetsInRange(GetInGamePosition(), playerList_, targets_))
             {
-                usedSkill_ = skill;
-                return;
+
+                break;
             }
+
         }
 
-        usedSkill_ = new Defend();
+        // check for movement last, as it is the least rewarding one
+
+        return action;
     }
 
+    public void RequestAct()
+    {
+        RequestAction();
+    }
+
+    public override void OnActionReceived(float[] vectorAction)
+    {
+        // 1. set usedSkill_
+        usedSkill_ = new Defend();
+        // 2. set targets_
+
+
+        // 3. call usedSkill_.Exec with targets 
+
+        StartCoroutine(usedSkill_.Exec(this, targets_));
+    }
 
     // ---------------------------------------------------------------------------------------
     /*                            CLASS METHODS IMPLEMENTATION                              */
     // ---------------------------------------------------------------------------------------
 
-    void Awake()
+    public override void Initialize()
     {
         inheritedComponent_ = new Canid();
         inheritedComponent_.Init();
@@ -171,11 +205,13 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
 
         // Initialize SkillSet
         Skillset.Add(new Bite());
-        Skillset.Add(new Move(GetStatValueByName("MOV")));
+        //Skillset.Add(new Move(GetStatValueByName("MOV")));
 
         // TickSpeed & LastSkillRank (default 3)
         TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
         LastSkillRank = 3;
+
+        HasMoved = false;
     }
 
     private bool InPreyList(IGameCharacter potentialPrey)

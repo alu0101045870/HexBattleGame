@@ -52,6 +52,12 @@ public class RedNosedHare : Agent, IGameCharacter, IEnemy, ILeporidae
         set { inheritedComponent_.Skillset = value; }
     }
 
+    public bool HasMoved
+    {
+        get { return inheritedComponent_.HasMoved; }
+        set { inheritedComponent_.HasMoved = value; }
+    }
+
     public float GetStatusEffectByName(string name)
     {
         return inheritedComponent_.GetStatusEffectByName(name);
@@ -97,15 +103,17 @@ public class RedNosedHare : Agent, IGameCharacter, IEnemy, ILeporidae
     /*                            AGENT ACTIONS IMPLEMENTATION                              */
     // ---------------------------------------------------------------------------------------
 
-    public IEnumerator Action(Dictionary<Vector2Int, GameObject> mapTiles)
+    public IEnumerator Action()
     {
         yield return new WaitForSeconds(1f);
     }
 
-    public void ChooseAction(Dictionary<Vector2Int, GameObject> mapTiles, bool hasMoved)
+    public void RequestAct()
     {
-        
+        RequestAction();
     }
+
+  
 
     // ---------------------------------------------------------------------------------------
     /*                            CLASS METHODS IMPLEMENTATION                              */

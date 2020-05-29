@@ -26,7 +26,7 @@ public abstract class Skill : ISkill
 
     public abstract IEnumerator Exec(IGameCharacter caller, List<GameObject> targets);
 
-    public virtual bool AreTargetsInRange(Vector2Int callerPos, Dictionary<Vector2Int, GameObject> mapTiles, 
+    public virtual bool AreTargetsInRange(Vector2Int callerPos,
         List<GameObject> groupOfInterest, List<GameObject> targetsInRange)
     {
         int range = range_;
@@ -35,7 +35,7 @@ public abstract class Skill : ISkill
 
         // ----------------------------------------------------------------------
 
-        HexTile currentTile = mapTiles[callerPos].GetComponent<HexTile>();
+        HexTile currentTile = BattleMap.Instance.mapTiles[callerPos].GetComponent<HexTile>();
 
         List<HexTile> neighbors = currentTile.Neighbors;
         HashSet<HexTile> visited = new HashSet<HexTile>(neighbors);
@@ -125,14 +125,14 @@ public class Move : Skill
         range_ = 4;
     }
 
-    public override bool AreTargetsInRange(Vector2Int callerPos, Dictionary<Vector2Int, GameObject> mapTiles,
+    public override bool AreTargetsInRange(Vector2Int callerPos, 
         List<GameObject> groupOfInterest, List<GameObject> targetsInRange)
     {
         // TODO: Range check
 
         // AD-HOC PATHFINDING ALGORITHM (RANDOM PATHING)
 
-        HexTile currentTile = mapTiles[callerPos].GetComponent<HexTile>();
+        HexTile currentTile = BattleMap.Instance.mapTiles[callerPos].GetComponent<HexTile>();
         List<HexTile> neighbors = currentTile.Neighbors;
         path_.Clear();
 
