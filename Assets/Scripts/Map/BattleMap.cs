@@ -35,7 +35,7 @@ public class BattleMap : MonoBehaviour
 
         //InitReward();             // -- Agent Shenanigans
 
-        //StartCoroutine(GameLoop());
+        GameLoop();
     }
 
     private void InitMap()
@@ -100,14 +100,16 @@ public class BattleMap : MonoBehaviour
         throw new NotImplementedException();
     }
 
-    private IEnumerator GameLoop()
+    private void GameLoop()
     {
         bool stopCondition = false;
         //int i = 0;
 
         while(!stopCondition)          // Take turns eternally
         {
-            yield return StartCoroutine(turnCaroussel.NextTurn());
+            turnCaroussel.NextTurn();
+
+            turnCaroussel.PassTurn();
 
             stopCondition = true;
         }

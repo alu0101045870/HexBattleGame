@@ -7,6 +7,7 @@
  *    --------------------------------------------------------------------------------------------
  */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -104,6 +105,10 @@ public static class HexCalculator
         return false;
     }
 
+    public static int RandomDir()
+    {
+        return UnityEngine.Random.Range(0, 5);
+    }
 
     // TODO:
     // CHECK METHOD OVERHEAD WITH PROFILER
@@ -132,5 +137,97 @@ public static class HexCalculator
             }
             //Debug.LogWarning("------------------------");
         }
+    }
+
+    // Movement helper
+    public static HexTile GetNeighborAtDir(Dictionary<Vector2Int, GameObject> tiles, 
+        Vector2Int current_coords, int dir)
+    {
+        GameObject neighbor;
+        Vector2Int[] axial_directions;
+
+        if (current_coords.y % 2 == 0)
+            axial_directions = axial_directions_odd_q[1];
+        else
+            axial_directions = axial_directions_odd_q[0];
+       
+        if (tiles.TryGetValue(current_coords + axial_directions[dir], out neighbor)) {
+            return neighbor.GetComponent<HexTile>();
+        }
+        
+        return null;
+        
+    }
+
+    public static Vector2Int GetNeighborAtDir(Vector2Int current_coords, int dir)
+    {
+        Vector2Int[] axial_directions;
+
+        if (current_coords.y % 2 == 0)
+            axial_directions = axial_directions_odd_q[1];
+        else
+            axial_directions = axial_directions_odd_q[0];
+
+        return current_coords + axial_directions[dir];
+    }
+
+    // ---------------------------------          ------------------------------------------------
+
+    // Given two positions, return travel direction from the first to the second (if adjacent)
+    public static int GetAdjacentTravelDirection(Vector2Int orig, Vector2Int dest)
+    {
+
+
+        // If positions are not adjacent at all, 
+        return -1;
+    }
+
+    // --------------------------------- DISTANCE METHODS ----------------------------------------
+
+    // Check wether or not a certain position is in a given range param. distance to another
+    // DOES account for obstacles and holes in map
+    // Effectively, checks wether there is a path of (at most) a certain length that can be traced
+    //  between two positions
+    public static bool InMapRange(Vector2Int orig, Vector2Int dest, int range)
+    {
+        throw new NotImplementedException();
+    }
+
+    // Check wether or not a certain position is in a given range param. distance to another
+    // Does NOT account for obstacles or holes in map
+    public static bool InEuclideanRange(Vector2Int orig, Vector2Int dest, int range)
+    {
+        throw new NotImplementedException();
+    }
+
+    // Check wether or not a certain position is in a given range param. distance to another
+    // Goes in a straight line, ignoring obstacles and holes
+    public static int InLineRange(Vector2Int orig, Vector2Int dest, int range)
+    {
+        Vector2Int trace = new Vector2Int();
+
+        for (int dir = 0; dir < 6; dir++)
+        {
+            trace.x = orig.x;
+            trace.y = orig.y;
+
+            for (int j = 0; j < range; j++)
+            {
+                trace = GetNeighborAtDir(trace, dir);
+
+                if (trace == dest)
+                    return dir;
+
+            }
+        }
+
+        // Not found in any direction at range
+        return -1;
+    }
+
+
+    public static int DistanceBetween(Vector2Int orig, Vector2Int dest)
+    {
+        return -1;
     }
 }

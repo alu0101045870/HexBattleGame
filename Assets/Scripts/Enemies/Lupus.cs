@@ -14,12 +14,11 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
 
     private Canid inheritedComponent_;
 
-    private List<GameObject> preyList_ = new List<GameObject>();
-    private List<GameObject> playerList_ = new List<GameObject>();
+    //private List<GameObject> preyList_ = new List<GameObject>();
+    //private List<GameObject> playerList_ = new List<GameObject>();
 
     // Action variables
-    private List<GameObject> targets_ = new List<GameObject>();
-    private Skill usedSkill_;
+    private List<TargetInformation> targets_ = new List<TargetInformation>();
 
     // ---------------------------------------------------------------------------------------
     /*                              INTERFACE IMPLEMENTATION                                */
@@ -51,16 +50,16 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
             GetGameObject().name = value;
         }
     }
-    public List<Skill> Skillset
-    {
-        get { return inheritedComponent_.Skillset; }
-        set { inheritedComponent_.Skillset = value; }
-    }
     public bool HasMoved { 
         get { return inheritedComponent_.HasMoved; } 
         set { inheritedComponent_.HasMoved = value; } 
     }
-
+    public List<Skill> Skills
+    {
+        get { return inheritedComponent_.Skills; }
+        set { inheritedComponent_.Skills = value; }
+    }
+   
     public float GetStatusEffectByName(string name)
     {
         return inheritedComponent_.GetStatusEffectByName(name);
@@ -97,96 +96,9 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
     {
         return inheritedComponent_.GetType().Name;
     }
-    public void DetectUnitsOfInterest()
-    {
-        // Interest in: 
-        // Player -> Enemy
-        // Leporidae -> Prey
-
-        playerList_.AddRange(GameObject.FindGameObjectsWithTag("Player"));
-        preyList_.AddRange(GameObject.FindGameObjectsWithTag("Enemy"));
-
-        for (int i = 0; i < preyList_.Count; i++)
-        {
-            IGameCharacter prey = preyList_[i].GetComponent<IGameCharacter>();
-
-            if (!InPreyList(prey))
-            {
-                preyList_.RemoveAt(i);
-            }
-        }
-    }
-
+   
     // ---------------------------------------------------------------------------------------
     /*                            AGENT ACTIONS IMPLEMENTATION                              */
-    // ---------------------------------------------------------------------------------------
-
-    public override void CollectObservations(VectorSensor sensor)
-    {
-        //
-
-        // Observations needed:
-        /*
-            - Some sort of knowledge of other units positions
-                + Could be an array indicating the hex distance between us
-                + Maybe filter out the non-relevant ones
-
-            - Have I already used my movement?   [BOOLEAN]
-            - My Status Effects
-            - My Stat Values
-            
-            - My Position ????
-         
-         
-         */
-    }
-
-    public override float[] Heuristic()
-    {
-        var action = new float[11];     // [0] -> used skill // [1 - 10] -> targets
-
-        // --------------------------------------------
-
-
-        for (int i = 0; i < Skillset.Count; i++)
-        {
-            if (Skillset[i].AreTargetsInRange(GetInGamePosition(), preyList_, targets_))
-            { 
-
-                break;
-            }
-            else if (Skillset[i].AreTargetsInRange(GetInGamePosition(), playerList_, targets_))
-            {
-
-                break;
-            }
-
-        }
-
-        // check for movement last, as it is the least rewarding one
-
-        return action;
-    }
-
-    public void RequestAct()
-    {
-        RequestAction();
-    }
-
-    public override void OnActionReceived(float[] vectorAction)
-    {
-        // 1. set usedSkill_
-        usedSkill_ = new Defend();
-        // 2. set targets_
-
-
-        // 3. call usedSkill_.Exec with targets 
-
-        StartCoroutine(usedSkill_.Exec(this, targets_));
-    }
-
-    // ---------------------------------------------------------------------------------------
-    /*                            CLASS METHODS IMPLEMENTATION                              */
     // ---------------------------------------------------------------------------------------
 
     public override void Initialize()
@@ -203,9 +115,7 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
         // Status effects
         SetStatusEffects(1, 1, 1, 1, 1, 1);
 
-        // Initialize SkillSet
-        Skillset.Add(new Bite());
-        //Skillset.Add(new Move(GetStatValueByName("MOV")));
+        Skills = new List<Skill> { new Bite(), new Move(), new Defend() };
 
         // TickSpeed & LastSkillRank (default 3)
         TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
@@ -214,6 +124,114 @@ public class Lupus : Agent, IGameCharacter, IEnemy, ICanid
         HasMoved = false;
     }
 
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        // Own HP       => Add in later versions
+        // Actions
+
+        // target in range (line)
+        //      - for each different skill range
+
+        sensor.AddObservation(1f);
+
+    }
+
+    public override float[] Heuristic()
+    {
+        float[] action = new float[2];
+
+        // [0] Skill Index
+        // [1] Direction in which the skill is aimed
+
+        targets_.Clear();
+
+        // Last two skills are Movement and Defend, which don't require target check for this heuristic approach
+        for (int s_index = 0; s_index < Skills.Count - 2; s_index++)
+        {
+            foreach (IGameCharacter unit in BattleMap.Instance.turnCaroussel.GetBattleUnits())
+            {
+                if (!unit.Equals(this))
+                {
+                    int dir = HexCalculator.InLineRange(GetInGamePosition(), unit.GetInGamePosition(), Skills[s_index].Range);
+                    
+                    if (dir != -1)      // target in range at a certain dir!
+                    {
+                        targets_.Add(
+                            new TargetInformation(unit, dir, HexCalculator.DistanceBetween(GetInGamePosition(), unit.GetInGamePosition()))
+                        );
+                    }
+                }
+            }
+
+            if (targets_.Count > 0)
+            {
+                action[0] = s_index;
+                break;
+            }
+        }
+        
+        if (targets_.Count > 1)                         // decide between targets and extract DIRECTION [1]
+        {
+            int target_index = 0;
+            int min_dist = targets_[0].distance;
+
+            for (int i = 1; i < targets_.Count; i++)
+            {
+                if (min_dist > targets_[i].distance)
+                {
+                    target_index = i;
+                    min_dist = targets_[i].distance;
+                }
+            }
+
+            action[1] = targets_[target_index].dir;
+        }
+        else if (targets_.Count == 1)                   // only one possible target
+        {
+            action[1] = targets_[0].dir;
+        }
+        else if(HasMoved)                                         
+        {
+            // if already moved, defend
+            action[0] = Skills.Count - 1;
+            action[1] = -1;
+        }
+        else
+        {
+            // Effectively, Move in a random direction
+            action[0] = Skills.Count - 2;
+            action[1] = HexCalculator.RandomDir();
+        }
+
+        return action;
+    }
+
+    public void RequestAct()
+    {
+        RequestAction();
+    }
+
+    public override void OnActionReceived(float[] vectorAction)
+    {
+        // Exec Skill with given direction
+
+        TakeAction(Mathf.FloorToInt(vectorAction[0]), Mathf.FloorToInt(vectorAction[1]));
+
+    }
+
+    private void TakeAction(int act1, int act2)
+    {
+        StartCoroutine(Skills[act1].Exec(this, act2));
+
+        LastSkillRank = Skills[act1].Rank; 
+
+    }
+
+    // ---------------------------------------------------------------------------------------
+    /*                            CLASS METHODS IMPLEMENTATION                              */
+    // ---------------------------------------------------------------------------------------
+
+    // TODO: Refactor
     private bool InPreyList(IGameCharacter potentialPrey)
     {
         return (potentialPrey.GetFamily().Equals("Leporidae"));

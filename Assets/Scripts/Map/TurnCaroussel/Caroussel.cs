@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class Caroussel : MonoBehaviour
 {
+    public GameObject entryPrefab;
+    public GameObject lupusPrefab;
+    public GameObject redNosedHarePrefab;
+
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS MEMBERS                                     */
     // ---------------------------------------------------------------------------------------
@@ -18,11 +22,6 @@ public class Caroussel : MonoBehaviour
 
     // Key: Name of the enemy | Pair: number of enemies of said species in battle
     private Dictionary<string, int> enemyNames = new Dictionary<string, int>();
-
-
-    public GameObject entryPrefab;
-    public GameObject lupusPrefab;                  
-    public GameObject redNosedHarePrefab;
 
     // ---------------------------------------------------------------------------------------
     /*                                    INIT METHODS                                      */
@@ -47,13 +46,6 @@ public class Caroussel : MonoBehaviour
         InstanceAtRandom(NUM_LUPUS, lupusPrefab);
         InstanceAtRandom(NUM_RED_NOSED_HARE, redNosedHarePrefab);
 
-        // Also, make sure to fill unit's preyLists/predLists/playerLists
-        // For this example, we make an AD-HOC assignation
-
-        for (int i = 0; i < battleUnits_.Count; i++)
-        {
-            battleUnits_[i].DetectUnitsOfInterest();
-        }
 
         //Debug.Log("Number of species in the field: " + enemyNames.Count);
         //Debug.Log(battleUnits_.Count + " enemies in the field.");
@@ -180,13 +172,20 @@ public class Caroussel : MonoBehaviour
     public void PassTurn()
     {
         turnQueue.Dequeue();
+        
+        // TODO: Also, make changes visible on UI
+        //
+
+
+        // 
+        // CalculateNextTurn(PRE_CALCULATED_TURNS - 1)
     }
 
     // ---------------------------------------------------------------------------------------
     /*                                       NEXT TURN                                      */
     // ---------------------------------------------------------------------------------------
 
-    public IEnumerator NextTurn()
+    public void NextTurn()
     {
         // Get the next turn owner
         IGameCharacter turnOwner = NextTurnOwner();
@@ -204,8 +203,6 @@ public class Caroussel : MonoBehaviour
         {
             // Execute chosen action and wait till its end
             turnOwner.RequestAct();
-
-            yield return new WaitForSeconds(1f);
         }
     }
 

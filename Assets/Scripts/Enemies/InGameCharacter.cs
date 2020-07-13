@@ -3,6 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct TargetInformation
+{
+    public IGameCharacter unit;
+    public int dir;
+    public int distance;
+
+    public TargetInformation (IGameCharacter unit, int dir, int distance)
+    {
+        this.unit = unit;
+        this.dir = dir;
+        this.distance = distance;
+    }
+}
+
 public interface IGameCharacter
 {
     int TickSpeed { get; set; }
@@ -10,8 +24,8 @@ public interface IGameCharacter
     int LP { get; set; }
     int LastSkillRank { get; set; }
     string Name { get; set; }
-    List<Skill> Skillset { get; set; }
     bool HasMoved { get; set; }
+    List<Skill> Skills { get; set; }
 
     float GetStatusEffectByName(string name);
     void SetStatusEffectByName(string name, float value);
@@ -21,8 +35,6 @@ public interface IGameCharacter
     void SetInGamePosition(GameObject go, int posX, int posY);
     GameObject GetGameObject();
     string GetFamily();
-
-    void DetectUnitsOfInterest();
 
     void RequestAct();
 }
@@ -44,8 +56,9 @@ public abstract class InGameCharacter : IGameCharacter
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
 
-    private List<Skill> skill_set_ = new List<Skill>();
     private bool hasMoved_;
+
+    private List<Skill> skills_ = new List<Skill>();
 
     public int TickSpeed { 
         get { return tickSpeed_; } 
@@ -65,8 +78,8 @@ public abstract class InGameCharacter : IGameCharacter
         set { lastSkillRank_ = value; }
     }
     public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public List<Skill> Skillset { get => skill_set_; set => skill_set_ = value; }
     public bool HasMoved { get => hasMoved_; set => hasMoved_ = value; }
+    public List<Skill> Skills { get => skills_; set => skills_ = value; }
 
     public float GetStatusEffectByName(string name)
     {
@@ -119,10 +132,7 @@ public abstract class InGameCharacter : IGameCharacter
     {
         throw new NotImplementedException();
     }
-    public void DetectUnitsOfInterest()
-    {
-        throw new NotImplementedException();
-    }
+   
     public void RequestAct()
     {
         throw new NotImplementedException();
