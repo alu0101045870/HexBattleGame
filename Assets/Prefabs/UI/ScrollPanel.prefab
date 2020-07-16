@@ -227,12 +227,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5923293581511367568}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0de3e5ad10bab764193733f1f8263fc3, type: 3}
+  m_Script: {fileID: 11500000, guid: 8beb967ba162f26499a80f15e6c6b162, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   entryPrefab: {fileID: 6833678124844754159, guid: 0d0e88fb19ff8464082e8fdd644f4fa1,
     type: 3}
   lupusPrefab: {fileID: 2173625818032979713, guid: 69f2ed3c1a8f2ac4cae7b1ad90544bef,
-    type: 3}
-  redNosedHarePrefab: {fileID: 4696203527417669404, guid: 67672ccaa2eb7064a925007240be706f,
     type: 3}

@@ -88,6 +88,25 @@ public static class HexCalculator
             );
     }
 
+    public static Vector3 CharacterPosition(Vector2Int destination)
+    {
+        int col = destination.y;
+        int row = destination.x;
+
+        // Q + R + S = 0 ==> S = -Q - R
+        int Q = col;
+        int R = row;
+        int S = -(Q + R);
+
+        // if Q % 2 == 0 => Extra offset is not added, which leads to the characteristic "saw pattern" 
+        // TODO: Revise if possible to avoid % operation for optimization
+        return new Vector3(
+            Q * HorzOffset,
+            0.8f,
+            R * VertOffset + ((Q % 2) * HexHeight / 2)
+            );
+    }
+
     public static bool IsNeighbor(Vector2Int callerPos, Vector2Int compPos)
     {
         Vector2Int[] axial_directions;
@@ -113,10 +132,10 @@ public static class HexCalculator
     // TODO:
     // CHECK METHOD OVERHEAD WITH PROFILER
     //
-    public static void SetNeighborsInMap(Dictionary<Vector2Int, GameObject> tiles)
+    public static void SetNeighborsInMap(Dictionary<Vector2Int, HexTile> tiles)
     {
         List<Vector2Int> keys = tiles.Keys.ToList<Vector2Int>();
-        GameObject tile;
+        HexTile tile;
 
         foreach (Vector2Int key in keys)
         {
@@ -126,13 +145,13 @@ public static class HexCalculator
             else
                 axial_directions = axial_directions_odd_q[0];
                 
-            foreach (Vector2Int dir in axial_directions)
+            for (int i = 0; i < axial_directions.Length; i++)
             {
-                Vector2Int temp = key + dir;
+                Vector2Int temp = key + axial_directions[i];
                 if (tiles.TryGetValue(temp, out tile))
                 {
-                    //Debug.Log(key + " + " + dir + " := " + tile.GetComponent<HexTile>().Position);
-                    tiles[key].GetComponent<HexTile>().AddNeighbor(tile);
+                    //Debug.Log(key + " + " + axial_directions[i] + " := " + tile.GetComponent<HexTile>().Position + " | " + i);
+                    tiles[key].AddNeighbor(i, tile);
                 }
             }
             //Debug.LogWarning("------------------------");
