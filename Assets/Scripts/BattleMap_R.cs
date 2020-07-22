@@ -9,6 +9,7 @@ public class BattleMap_R : MonoBehaviour
 
     public GameObject hexTilePrefab;
     public GameObject lupusPrefab;
+    public GameObject rnhPrefab;
     public List<TextAsset> mapFiles;
 
     // ---------------------------------------------------------------------------------------
@@ -78,13 +79,15 @@ public class BattleMap_R : MonoBehaviour
 
     void InitializeAgents()
     {
-        // TEMPORARY IMPLEMENTATION
+        // ----------------------------------------------------------------------  TEMPORARY IMPLEMENTATION
         const int NUM_LUPUS = 1;
-        //const int NUM_RED_NOSED_HARE = 1;
+        const int NUM_RED_NOSED_HARE = 1;
 
         GameObject go;
         IGameCharacter agent;
+        
         Vector2Int key = new Vector2Int(2, 3);      // Fixed for testing purposes only!
+        Vector2Int key2 = new Vector2Int(2, 1);
 
         for (int i = 0; i < NUM_LUPUS; i++)
         {
@@ -109,6 +112,31 @@ public class BattleMap_R : MonoBehaviour
 
             battleUnits_.Add(go.GetComponent<Lupus_R>());
         }
+
+        // ----------------------------------------------------------------- GENERALIZE THIS BIT IN THE FUTURE
+
+        /*for (int i = 0; i < NUM_RED_NOSED_HARE; i++)
+        {
+            go = Instantiate(rnhPrefab, mapTiles[key2].transform);
+            go.transform.position = HexCalculator.CharacterPosition(key2);
+
+            agent = go.GetComponent<RedNosedHare_R>();
+            mapTiles[key2].OccupiedBy = agent;
+            agent.InGamePosition = key2;
+
+            if (!enemyNames.ContainsKey(agent.Name))
+            {
+                agent.Name = agent.Name;
+                enemyNames.Add(agent.Name, 1);
+            }
+            else
+            {
+                enemyNames[agent.Name]++;
+                agent.Name += " (" + enemyNames[agent.Name] + ")";
+            }
+
+            battleUnits_.Add(go.GetComponent<RedNosedHare_R>());
+        }*/
     }
 
     void InitializeCaroussel()
@@ -119,19 +147,24 @@ public class BattleMap_R : MonoBehaviour
 
     IEnumerator GameLoop()
     {
+        
         int index;
-
+        
         for (int i = 0; i < 5; i++)
         {
             Debug.LogWarning("Turn!");
 
             index = Caroussel_R.Instance.NextTurnOwner();
 
-            battleUnits_[index].RequestAct();
+            for (int j = 0; j < battleUnits_[index].GetStatValueByName("ACT"); j++)
+            {
+                battleUnits_[index].RequestAct();
 
-            yield return new WaitForSeconds(1f);
-            
+                yield return new WaitForSeconds(2f);
+            }
             Caroussel_R.Instance.PassTurn();
         }
+       
+        //yield return null;
     }
 }

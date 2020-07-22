@@ -168,6 +168,8 @@ MonoBehaviour:
     type: 3}
   lupusPrefab: {fileID: 2173625818032979713, guid: 69f2ed3c1a8f2ac4cae7b1ad90544bef,
     type: 3}
+  rnhPrefab: {fileID: 4696203527417669404, guid: 67672ccaa2eb7064a925007240be706f,
+    type: 3}
   mapFiles:
   - {fileID: 4900000, guid: 7dd98e15448b98c429a72c07d175e91d, type: 3}
   - {fileID: 4900000, guid: aa5e001c211b5a748b5b00ff50dffd2a, type: 3}
@@ -773,7 +775,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -318.89, y: -133.08}
+  m_AnchoredPosition: {x: -318.89, y: -133.08002}
   m_SizeDelta: {x: -658.486, y: -283.526}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1723285778

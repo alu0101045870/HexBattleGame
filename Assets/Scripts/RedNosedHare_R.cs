@@ -1,34 +1,13 @@
-﻿using System.Collections;
+﻿using MLAgents;
+using MLAgents.Sensors;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using MLAgents;
-using MLAgents.Sensors;
 
-public interface IGameCharacter
+public class RedNosedHare_R : Agent, IGameCharacter
 {
-    string Species { get; set; }
-    string Name { get; set; }
-    int TickSpeed { get; set; }
-    int CounterValue { get; set; }
-    int HP { get; set; }
-    int LastSkillRank { get; set; }
-    Vector2Int InGamePosition { get; set; }
-
-
-    float GetStatusEffectByName(string name);
-    void SetStatusEffectByName(string name, float value);
-
-    int GetStatValueByName(string name);
-    void SetStatValueByName(string name, int value);
-
-    // Agent control
-    void RequestAct();
-}
-
-public class Lupus_R : Agent, IGameCharacter
-{
-    private string species_ = "Canis";
-    private string name_ = "Lupus";
+    private string species_ = "Leporidae";
+    private string name_ = "RedNosedHare";
     private Vector2Int ingame_position_ = new Vector2Int();
 
     private int tickspeed_;
@@ -72,7 +51,8 @@ public class Lupus_R : Agent, IGameCharacter
     public string Name
     {
         get { return name_; }
-        set { 
+        set
+        {
             name_ = value;
             gameObject.name = value;
         }
@@ -102,7 +82,7 @@ public class Lupus_R : Agent, IGameCharacter
         get { return ingame_position_; }
         set { ingame_position_ = value; }
     }
-    
+
     // ---------------------------------------------------------------------------------------
 
     public float GetStatusEffectByName(string name)
@@ -171,15 +151,14 @@ public class Lupus_R : Agent, IGameCharacter
         RequestDecision();
     }
 
-
     public override void Initialize()
     {
         gameObject.tag = "Enemy";
-        
+
         InitStatValues();                               // Stat initialization
         InitStatusEffects();
 
-        SetStatValues(74, 7, 1, 1, 1, 2, 2, 59, 0);
+        SetStatValues(78, 6, 2, 1, 10, 2, 2, 65, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
 
         //Skills = new List<Skill> { new Bite(), new Move(), new Defend() };
@@ -208,11 +187,11 @@ public class Lupus_R : Agent, IGameCharacter
 
         int dir = TargetInRange();
 
-        if (dir != -1) 
-        { 
+        if (dir != -1)
+        {
             action[0] = 0f;
             action[1] = dir;
-        }    
+        }
         else
         {
             action[0] = 1f;
@@ -230,17 +209,17 @@ public class Lupus_R : Agent, IGameCharacter
         {
             case 0: // Attack
                 {
-                    StartCoroutine(Attack((int)vectorAction[1]));
+                    Attack((int)vectorAction[1]);
                     break;
                 }
             case 1: // Move
                 {
-                    StartCoroutine(Move((int)vectorAction[1]));
+                    Move((int)vectorAction[1]);
                     break;
                 }
             default:
                 {
-                    StartCoroutine(Defend((int)vectorAction[1]));
+                    Defend((int)vectorAction[1]);
                     break;
                 }
         }
@@ -257,30 +236,17 @@ public class Lupus_R : Agent, IGameCharacter
     private int TargetInRange()
     {
         HexTile currentTile = BattleMap_R.Instance.mapTiles[ingame_position_];
-        HexTile neighbor;
-
-        for (int i = 0; i < 6; i++)
-        {
-            // if tile is occupied by an enemy or prey
-            if (currentTile.Neighbors.TryGetValue(i, out neighbor)) {
-                
-                if(neighbor.Occupied && neighbor.OccupiedBy.Species.Equals("Leporidae"))            // => Extract method (generalization)
-                {
-                    return i;
-                } 
-            }
-        }
 
         return -1;
     }
 
-    IEnumerator Attack(int dir)
+    void Attack(int dir)
     {
-        Debug.Log(Name + " attacked " + dir + "!");
-        yield return null;
+        Debug.Log(Name + "Attacked " + dir + "!");
+
     }
 
-    IEnumerator Move(int dir)
+    void Move(int dir)
     {
         // First, check if movement is possible
         // - Does the destination tile exist?
@@ -293,31 +259,27 @@ public class Lupus_R : Agent, IGameCharacter
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
-                transform.parent = destinationTile.transform;
                 gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
 
+                destinationTile.OccupiedBy = this;
+                this.gameObject.transform.parent = destinationTile.transform;
+
+                BattleMap_R.Instance.mapTiles[ingame_position_].EmptyTile();
                 ingame_position_ = destination;
-                
 
-                // -------------------------------
+                // -----------------------------------
                 Debug.Log(Name + " moved " + dir + "!");
-
             }
-        } 
+        }
         else
         {
             Debug.Log(Name + " could NOT move!");
-            
         }
-
-        yield return null;
     }
 
-    IEnumerator Defend(int dir)
+    void Defend(int dir)
     {
         Debug.Log(Name + " defended!");
-        yield return null;
     }
-
-
 }
+

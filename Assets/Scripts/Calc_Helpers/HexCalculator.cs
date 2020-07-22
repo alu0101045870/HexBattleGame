@@ -129,9 +129,7 @@ public static class HexCalculator
         return UnityEngine.Random.Range(0, 5);
     }
 
-    // TODO:
-    // CHECK METHOD OVERHEAD WITH PROFILER
-    //
+    
     public static void SetNeighborsInMap(Dictionary<Vector2Int, HexTile> tiles)
     {
         List<Vector2Int> keys = tiles.Keys.ToList<Vector2Int>();

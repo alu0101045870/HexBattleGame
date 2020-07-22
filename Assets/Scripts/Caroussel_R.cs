@@ -98,7 +98,7 @@ public class Caroussel_R : MonoBehaviour
         // we check for 0 values too so we potentially save some comp. time
         for (int i = 1; i < battleUnits.Count; i++)
         {
-            // if (battleUnits[i].IsActive())       // => dead, asleep or incapacitated
+            // if (battleUnits[i].IsActive())       // => dead, [asleep or incapacitated]
             if (battleUnits[i].CounterValue < battleUnits[index].CounterValue)
             {
                 index = i;
@@ -115,7 +115,7 @@ public class Caroussel_R : MonoBehaviour
         {
             for (int i = 0; i < battleUnits.Count; i++)
             {
-                // if (battleUnits[i].IsActive())       // => dead, asleep or incapacitated
+                // if (battleUnits[i].IsActive())       // => dead, [asleep or incapacitated]
                 battleUnits[i].CounterValue -= battleUnits[index].CounterValue;
             }
         }
@@ -149,17 +149,20 @@ public class Caroussel_R : MonoBehaviour
     public void PassTurn()
     {
         // first, dequeue the first turn entry
+        entries_.Dequeue();
 
         // second, actually dequeue from the unity gameObject
+        Destroy(gameObject.transform.GetChild(0).GetChild(0).gameObject);
 
-        // then, check for the TURN INFORMATION (store in caroussel_r)
+        // TODO: then, check for the TURN INFORMATION (store in caroussel_r)
 
         // if => haste has been applied     
         //       skill rank has changed (not 3)
         //       a character has [died, fell asleep, been incapacitated]
         // then: re-calculate the full queue
-        
+
         // else: calculate and assign next turn
+        SetNextTurn(GetNextTurnIndex());
 
         // refresh UI to show changes
     }
