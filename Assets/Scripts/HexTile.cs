@@ -28,7 +28,7 @@ public class HexTile : MonoBehaviour
         get { return occupied_; }
     }
 
-    public IGameCharacter OccupiedBy
+    public IGameCharacter Occupier
     {
         get
         {

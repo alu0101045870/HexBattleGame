@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using MLAgents;
 using MLAgents.Sensors;
+using System;
+using Random = UnityEngine.Random;
 
 public interface IGameCharacter
 {
@@ -10,10 +12,11 @@ public interface IGameCharacter
     string Name { get; set; }
     int TickSpeed { get; set; }
     int CounterValue { get; set; }
-    int HP { get; set; }
+    int MaxHP { get; set; }
     int LastSkillRank { get; set; }
     Vector2Int InGamePosition { get; set; }
 
+    bool TurnOver { get; set; }
 
     float GetStatusEffectByName(string name);
     void SetStatusEffectByName(string name, float value);
@@ -23,28 +26,36 @@ public interface IGameCharacter
 
     // Agent control
     void RequestAct();
+
+    event Action<float> OnHealthChanged;
+    void ReceiveDamage(float amount);
 }
 
 public class Lupus_R : Agent, IGameCharacter
 {
+    private bool turnOver_ = false;
     private string species_ = "Canis";
     private string name_ = "Lupus";
     private Vector2Int ingame_position_ = new Vector2Int();
 
     private int tickspeed_;
     private int counterValue_;
-    private int hp_;
+    private int maxHP_;
     private int lastSkillRank_;
 
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
 
+    public event Action<float> OnHealthChanged = delegate { };
+    
     // ---------------------------------------------------------------------------------------
-    /*                            INHERITED COMPONENT METHODS                               */
+    /*                                INITIALIZATION METHODS                                */
     // ---------------------------------------------------------------------------------------
+
 
     private void InitStatValues()
     {
+        statValues_.Add("HP", 0);
         statValues_.Add("STR", 0);                  // Physical strength and damage
         statValues_.Add("MAG", 0);                  // Magic damage
         statValues_.Add("RES", 0);                  // Resistance to physical damage
@@ -87,10 +98,10 @@ public class Lupus_R : Agent, IGameCharacter
         get { return counterValue_; }
         set { counterValue_ = value; }
     }
-    public int HP
+    public int MaxHP
     {
-        get { return hp_; }
-        set { hp_ = value; }
+        get { return maxHP_; }
+        set { maxHP_ = value; }
     }
     public int LastSkillRank
     {
@@ -102,7 +113,13 @@ public class Lupus_R : Agent, IGameCharacter
         get { return ingame_position_; }
         set { ingame_position_ = value; }
     }
-    
+
+    public bool TurnOver 
+    {
+        get { return turnOver_; }
+        set { turnOver_ = value; } 
+    }
+
     // ---------------------------------------------------------------------------------------
 
     public float GetStatusEffectByName(string name)
@@ -141,7 +158,8 @@ public class Lupus_R : Agent, IGameCharacter
 
     private void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
     {
-        hp_ = lps;
+        maxHP_ = lps;
+        SetStatValueByName("HP", lps);
         SetStatValueByName("STR", str);
         SetStatValueByName("MAG", mag);
         SetStatValueByName("RES", res);
@@ -187,6 +205,8 @@ public class Lupus_R : Agent, IGameCharacter
         // TickSpeed & LastSkillRank (default 3)
         tickspeed_ = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
         lastSkillRank_ = 3;
+
+
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -208,15 +228,25 @@ public class Lupus_R : Agent, IGameCharacter
 
         int dir = TargetInRange();
 
-        if (dir != -1) 
-        { 
+        if (GetStatValueByName("HP") < (Mathf.RoundToInt(MaxHP * 0.35f)))
+        {
+            action[0] = -1f;
+            action[1] = 2f;         // Defend when hp drops under a certain threshold
+        }
+        if (dir != -1)
+        {
             action[0] = 0f;
             action[1] = dir;
-        }    
+        }
         else
         {
             action[0] = 1f;
-            action[1] = Random.Range(0, 5);         // Random dir
+            dir = ChaseDir();
+
+            if (dir != -1)
+                action[1] = dir;
+            else
+                action[1] = Random.Range(0, 5);
         }
 
         return action;
@@ -230,25 +260,92 @@ public class Lupus_R : Agent, IGameCharacter
         {
             case 0: // Attack
                 {
-                    StartCoroutine(Attack((int)vectorAction[1]));
+                    Attack((int)vectorAction[1]);
                     break;
                 }
             case 1: // Move
                 {
-                    StartCoroutine(Move((int)vectorAction[1]));
+                    Move((int)vectorAction[1]);
                     break;
                 }
             default:
                 {
-                    StartCoroutine(Defend((int)vectorAction[1]));
+                    Defend((int)vectorAction[1]);
                     break;
                 }
         }
+
+        turnOver_ = true;
+    }
+
+    // ---------------------------------------------------------------------------------------
+    /*                                  AGENT SENSOR METHODS                                */
+    // ---------------------------------------------------------------------------------------
+
+    private List<float> MovementAdjacencySensor()
+    {
+        List<float> adjacencySensor = new List<float>();
+
+        return adjacencySensor;
+    }
+
+    private List<float> AttackAdjacencySensor()
+    {
+        List<float> adjacencySensor = new List<float>();
+
+        return adjacencySensor;
+    }
+
+    private List<IGameCharacter> PredatorsInSightSensor()               // ------------------------ TODO: Sight perception sensor implementation
+    {
+        List<IGameCharacter> predators = new List<IGameCharacter>();
+
+        foreach (IGameCharacter igc in BattleMap_R.Instance.battleUnits_)
+        {
+            if (igc.Species == "Abomination")
+            {
+                predators.Add(igc);
+            }
+        }
+
+        return predators;
+    }
+
+    private List<IGameCharacter> ObjectivesInSightSensor()              // ------------------------ TODO: Sight perception sensor implementation
+    {
+        List<IGameCharacter> objectives = new List<IGameCharacter>();
+
+        foreach (IGameCharacter igc in BattleMap_R.Instance.battleUnits_)
+        {
+            if (igc.Species == "Leporidae")
+            {
+                objectives.Add(igc);
+            }
+        }
+
+        return objectives;
     }
 
     // ---------------------------------------------------------------------------------------
     /*                                  AGENT ACTION METHODS                                */
     // ---------------------------------------------------------------------------------------
+
+    /// <summary>
+    ///     In short, this is a variation on the A* algorithm. 
+    /// </summary>
+    /// <returns>
+    ///     The optimal movement direction to move towards the most desirable prey
+    /// </returns>
+    private int ChaseDir()                                            // ---------------------- TODO: Implemetation for several objective scenarios
+    {
+        List<IGameCharacter> detectedEnemies = ObjectivesInSightSensor();
+        HexTile currentTile = BattleMap_R.Instance.mapTiles[ingame_position_];
+
+        //  TODO: Which is my most desirable prey?
+        int dir = HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition);
+
+        return dir;
+    }
 
     /// <summary>
     /// Checks one tile ahead in every direction in search for enemies
@@ -264,7 +361,7 @@ public class Lupus_R : Agent, IGameCharacter
             // if tile is occupied by an enemy or prey
             if (currentTile.Neighbors.TryGetValue(i, out neighbor)) {
                 
-                if(neighbor.Occupied && neighbor.OccupiedBy.Species.Equals("Leporidae"))            // => Extract method (generalization)
+                if(neighbor.Occupied && neighbor.Occupier.Species.Equals("Leporidae"))            // => Extract method (generalization)
                 {
                     return i;
                 } 
@@ -274,13 +371,18 @@ public class Lupus_R : Agent, IGameCharacter
         return -1;
     }
 
-    IEnumerator Attack(int dir)
+    void Attack(int dir)
     {
-        Debug.Log(Name + " attacked " + dir + "!");
-        yield return null;
+        // Calculate damage on target
+        IGameCharacter target = BattleMap_R.Instance.mapTiles[HexCalculator.GetNeighborAtDir(ingame_position_, dir)].Occupier;
+        float damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
+
+        Debug.Log(Name + " did " + damageApplied + "damage!");
+
+        target.ReceiveDamage(damageApplied);
     }
 
-    IEnumerator Move(int dir)
+    void Move(int dir)
     {
         // First, check if movement is possible
         // - Does the destination tile exist?
@@ -293,15 +395,14 @@ public class Lupus_R : Agent, IGameCharacter
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
-                transform.parent = destinationTile.transform;
                 gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
+                BattleMap_R.Instance.mapTiles[ingame_position_].EmptyTile();
 
                 ingame_position_ = destination;
-                
+                destinationTile.Occupier = this;
 
                 // -------------------------------
                 Debug.Log(Name + " moved " + dir + "!");
-
             }
         } 
         else
@@ -309,15 +410,25 @@ public class Lupus_R : Agent, IGameCharacter
             Debug.Log(Name + " could NOT move!");
             
         }
-
-        yield return null;
     }
 
-    IEnumerator Defend(int dir)
+    void Defend(int dir)
     {
         Debug.Log(Name + " defended!");
-        yield return null;
     }
 
+    // ---------------------------------------------------------------------------------------
+    /*                               AGENT STAT CHANGE CALLS                                */
+    // ---------------------------------------------------------------------------------------
+
+    public void ReceiveDamage(float amount)
+    {
+        // Get the new health percentage left on target
+        SetStatValueByName("HP", GetStatValueByName("HP") - (int) amount);
+        float percentageLeft = Mathf.Clamp((float) GetStatValueByName("HP"), 0, MaxHP) / (float) MaxHP;
+
+        // Update calling target's healthbar delegate
+        OnHealthChanged(percentageLeft);
+    }
 
 }

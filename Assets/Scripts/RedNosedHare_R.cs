@@ -1,22 +1,27 @@
 ﻿using MLAgents;
 using MLAgents.Sensors;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class RedNosedHare_R : Agent, IGameCharacter
 {
+    private bool turnOver_ = false;
     private string species_ = "Leporidae";
     private string name_ = "RedNosedHare";
     private Vector2Int ingame_position_ = new Vector2Int();
 
     private int tickspeed_;
     private int counterValue_;
-    private int hp_;
+    private int maxHP_;
     private int lastSkillRank_;
 
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
+
+    public event Action<float> OnHealthChanged = delegate { };
 
     // ---------------------------------------------------------------------------------------
     /*                            INHERITED COMPONENT METHODS                               */
@@ -24,6 +29,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
     private void InitStatValues()
     {
+        statValues_.Add("HP", 0);
         statValues_.Add("STR", 0);                  // Physical strength and damage
         statValues_.Add("MAG", 0);                  // Magic damage
         statValues_.Add("RES", 0);                  // Resistance to physical damage
@@ -67,10 +73,10 @@ public class RedNosedHare_R : Agent, IGameCharacter
         get { return counterValue_; }
         set { counterValue_ = value; }
     }
-    public int HP
+    public int MaxHP
     {
-        get { return hp_; }
-        set { hp_ = value; }
+        get { return maxHP_; }
+        set { maxHP_ = value; }
     }
     public int LastSkillRank
     {
@@ -81,6 +87,12 @@ public class RedNosedHare_R : Agent, IGameCharacter
     {
         get { return ingame_position_; }
         set { ingame_position_ = value; }
+    }
+
+    public bool TurnOver
+    {
+        get { return turnOver_; }
+        set { turnOver_ = value; }
     }
 
     // ---------------------------------------------------------------------------------------
@@ -121,7 +133,8 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
     private void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
     {
-        hp_ = lps;
+        maxHP_ = lps;
+        SetStatValueByName("HP", lps);
         SetStatValueByName("STR", str);
         SetStatValueByName("MAG", mag);
         SetStatValueByName("RES", res);
@@ -158,10 +171,8 @@ public class RedNosedHare_R : Agent, IGameCharacter
         InitStatValues();                               // Stat initialization
         InitStatusEffects();
 
-        SetStatValues(78, 6, 2, 1, 10, 2, 2, 65, 0);
+        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
-
-        //Skills = new List<Skill> { new Bite(), new Move(), new Defend() };
 
         // TickSpeed & LastSkillRank (default 3)
         tickspeed_ = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
@@ -170,14 +181,13 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        // Own HP       => Add in later versions
-        // Actions
+        sensor.AddObservation(GetStatValueByName("HP"));
 
-        // target in range (line)
-        //      - for each different skill range
+        // For future implementations, it would be interesting to have a way of 
+        // figuring out a level of "desirability" for targets in actions
 
-        sensor.AddObservation(1f);
-
+        sensor.AddObservation(MovementAdjacencySensor());           // Directions to which agent could move
+        sensor.AddObservation(AttackAdjacencySensor());             // Directions to which agent could attack
     }
 
     public override float[] Heuristic()
@@ -187,6 +197,11 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
         int dir = TargetInRange();
 
+        if (GetStatValueByName("HP") < (Mathf.RoundToInt(MaxHP * 0.35f)))
+        {
+            action[0] = -1f;
+            action[1] = 2f;         // Defend when hp drops under a certain threshold
+        }
         if (dir != -1)
         {
             action[0] = 0f;
@@ -195,7 +210,12 @@ public class RedNosedHare_R : Agent, IGameCharacter
         else
         {
             action[0] = 1f;
-            action[1] = Random.Range(0, 5);         // Random dir
+            dir = RunnawayDir();
+
+            if (dir != -1)
+                action[1] = dir;
+            else
+                action[1] = Random.Range(0, 5);
         }
 
         return action;
@@ -223,11 +243,67 @@ public class RedNosedHare_R : Agent, IGameCharacter
                     break;
                 }
         }
+
+        turnOver_ = true;
+    }
+
+    // ---------------------------------------------------------------------------------------
+    /*                                  AGENT SENSOR METHODS                                */
+    // ---------------------------------------------------------------------------------------
+
+    private List<float> MovementAdjacencySensor()
+    {
+        List<float> adjacencySensor = new List<float>();
+
+        return adjacencySensor;
+    }
+
+    private List<float> AttackAdjacencySensor()
+    {
+        List<float> adjacencySensor = new List<float>();
+
+        return adjacencySensor;
+    }
+
+    private List<IGameCharacter> PredatorsInSightSensor()               // ------------------------ TODO: Sight perception sensor implementation
+    {
+        List<IGameCharacter> predators = new List<IGameCharacter>();
+
+        foreach (IGameCharacter igc in BattleMap_R.Instance.battleUnits_)
+        {
+            if (igc.Species == "Canis")
+            {
+                predators.Add(igc);
+            }
+        }
+
+        return predators;
     }
 
     // ---------------------------------------------------------------------------------------
     /*                                  AGENT ACTION METHODS                                */
     // ---------------------------------------------------------------------------------------
+
+    private int RunnawayDir()                                            // ---------------------- TODO: Implemetation for several predator scenarios
+    {
+        List<IGameCharacter> detectedEnemies = PredatorsInSightSensor();
+        HexTile currentTile = BattleMap_R.Instance.mapTiles[ingame_position_];
+        HexTile neighbor;
+
+        //
+        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition));
+
+        // Check directions available
+        for (int i = 0; i < oppositedir.Count; i++)
+        {
+            if (currentTile.Neighbors.TryGetValue(oppositedir[i], out neighbor))
+                if (!neighbor.Occupied)
+                    return oppositedir[i];          // return most optimal escape route (if possible)
+        }
+        
+        // If all are occupied, "failed escape"
+        return -1;
+    }
 
     /// <summary>
     /// Checks one tile ahead in every direction in search for enemies
@@ -260,26 +336,41 @@ public class RedNosedHare_R : Agent, IGameCharacter
             {
                 destination = destinationTile.Position;
                 gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
-
-                destinationTile.OccupiedBy = this;
-                this.gameObject.transform.parent = destinationTile.transform;
-
                 BattleMap_R.Instance.mapTiles[ingame_position_].EmptyTile();
-                ingame_position_ = destination;
 
-                // -----------------------------------
+                ingame_position_ = destination;
+                destinationTile.Occupier = this;
+
+                // -------------------------------
                 Debug.Log(Name + " moved " + dir + "!");
             }
         }
         else
         {
             Debug.Log(Name + " could NOT move!");
+
         }
     }
 
     void Defend(int dir)
     {
         Debug.Log(Name + " defended!");
+    }
+
+    // ---------------------------------------------------------------------------------------
+    /*                                  AGENT ACTION METHODS                                */
+    // ---------------------------------------------------------------------------------------
+
+    public void ReceiveDamage(float amount)
+    {
+        Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
+
+        // Get the new health percentage left on target
+        SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
+        float percentageLeft = (float)GetStatValueByName("HP") / (float)MaxHP;
+
+        // Update calling target's healthbar delegate
+        OnHealthChanged(percentageLeft);
     }
 }
 

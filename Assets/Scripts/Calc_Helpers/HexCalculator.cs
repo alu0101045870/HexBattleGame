@@ -12,7 +12,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
+using Random = UnityEngine.Random;
 
 /// <summary>
 /// This class decides a conceptual Hexagonal Tile position in the real world
@@ -31,9 +31,9 @@ public static class HexCalculator
     // ------------------------------------- PROPERTIES ------------------------------------------
     // ===========================================================================================
 
-    private static float HexWidth => 2 * SIZE;
+    public static float HexWidth => 2 * SIZE;
 
-    private static float HexHeight { get { return H_MULT * SIZE; } }
+    public static float HexHeight { get { return H_MULT * SIZE; } }
     private static float VertOffset { get { return HexHeight; } }
     private static float HorzOffset { get { return HexWidth * 0.75f; } }
 
@@ -68,7 +68,7 @@ public static class HexCalculator
         return new Vector3(
             Q * HorzOffset, 
             0,
-            R * VertOffset + ((Q % 2) * HexHeight / 2)
+            R * VertOffset + ((Q & 1) * HexHeight / 2)
             );
     }
 
@@ -84,7 +84,7 @@ public static class HexCalculator
         return new Vector3(
             Q * HorzOffset,
             0.8f,
-            R * VertOffset + ((Q % 2) * HexHeight / 2)
+            R * VertOffset + ((Q & 1) * HexHeight / 2)
             );
     }
 
@@ -103,14 +103,14 @@ public static class HexCalculator
         return new Vector3(
             Q * HorzOffset,
             0.8f,
-            R * VertOffset + ((Q % 2) * HexHeight / 2)
+            R * VertOffset + ((Q & 1) * HexHeight / 2)
             );
     }
 
     public static bool IsNeighbor(Vector2Int callerPos, Vector2Int compPos)
     {
         Vector2Int[] axial_directions;
-        if (callerPos.y % 2 == 0)
+        if ((callerPos.y & 1) == 0)
             axial_directions = axial_directions_odd_q[1];
         else
             axial_directions = axial_directions_odd_q[0];
@@ -138,7 +138,7 @@ public static class HexCalculator
         foreach (Vector2Int key in keys)
         {
             Vector2Int[] axial_directions;
-            if (key.y % 2 == 0)
+            if ((key.y & 1) == 0)
                 axial_directions = axial_directions_odd_q[1];
             else
                 axial_directions = axial_directions_odd_q[0];
@@ -156,31 +156,11 @@ public static class HexCalculator
         }
     }
 
-    // Movement helper
-    public static HexTile GetNeighborAtDir(Dictionary<Vector2Int, GameObject> tiles, 
-        Vector2Int current_coords, int dir)
-    {
-        GameObject neighbor;
-        Vector2Int[] axial_directions;
-
-        if (current_coords.y % 2 == 0)
-            axial_directions = axial_directions_odd_q[1];
-        else
-            axial_directions = axial_directions_odd_q[0];
-       
-        if (tiles.TryGetValue(current_coords + axial_directions[dir], out neighbor)) {
-            return neighbor.GetComponent<HexTile>();
-        }
-        
-        return null;
-        
-    }
-
     public static Vector2Int GetNeighborAtDir(Vector2Int current_coords, int dir)
     {
         Vector2Int[] axial_directions;
 
-        if (current_coords.y % 2 == 0)
+        if ((current_coords.y & 1) == 0)
             axial_directions = axial_directions_odd_q[1];
         else
             axial_directions = axial_directions_odd_q[0];
@@ -190,16 +170,146 @@ public static class HexCalculator
 
     // ---------------------------------          ------------------------------------------------
 
-    // Given two positions, return travel direction from the first to the second (if adjacent)
-    public static int GetAdjacentTravelDirection(Vector2Int orig, Vector2Int dest)
+    public static int GeneralDirectionTowards(Vector2Int pos1, Vector2Int pos2)
     {
+        int generalDir = -1;
 
+        if ((pos1.y & 1) == 0)                     // even tile
+        {
+            if ((pos1.x == pos2.x && pos1.y < pos2.y) || (pos1.x < pos2.x && pos1.y < pos2.y))
+            {
+                generalDir = 2;
+            }
+            else if ((pos1.x == pos2.x && pos1.y > pos2.y) || (pos1.x < pos2.x && pos1.y > pos2.y))
+            {
+                generalDir = 0;
+            }
+            else if (pos1.x > pos2.x && pos1.y < pos2.y)
+            {
+                generalDir = 5;
+            }
+            else if (pos1.x > pos2.x && pos1.y > pos2.y)
+            {
+                generalDir = 3;
+            }
+            else if (pos1.x > pos2.x && pos1.y == pos2.y)
+            {
+                generalDir = 4;
+            }
+            else if (pos1.x < pos2.x && pos1.y == pos2.y)
+            {
+                generalDir = 1;
+            }
+        }
+        else                                    // odd tile
+        {
+            if ((pos1.x == pos2.x && pos1.y < pos2.y) || (pos1.x > pos2.x && pos1.y < pos2.y))
+            {
+                generalDir = 5;
+            }
+            else if ((pos1.x == pos2.x && pos1.y > pos2.y) || (pos1.x > pos2.x && pos1.y > pos2.y))
+            {
+                generalDir = 3;
+            }
+            else if (pos1.x < pos2.x && pos1.y < pos2.y)
+            {
+                generalDir = 2;
+            }
+            else if (pos1.x < pos2.x && pos1.y > pos2.y)
+            {
+                generalDir = 0;
+            }
+            else if (pos1.x > pos2.x && pos1.y == pos2.y)
+            {
+                generalDir = 4;
+            }
+            else if (pos1.x < pos2.x && pos1.y == pos2.y)
+            {
+                generalDir = 1;
+            }
+        }
 
-        // If positions are not adjacent at all, 
-        return -1;
+        return generalDir;
+    }
+
+    public static List<int> OppositeDir(int dir)
+    {
+        List<int> oppositedir = new List<int>();
+
+        switch (dir)
+        {
+            case 0:
+                oppositedir.AddRange(new int[] { 5, 4, 2 });
+                break;
+            case 1:
+                oppositedir.AddRange(new int[] { 4, 3, 5 });
+                break;
+            case 2:
+                oppositedir.AddRange(new int[] { 3, 4, 0 });
+                break;
+            case 3:
+                oppositedir.AddRange(new int[] { 2, 1, 5 });
+                break;
+            case 4:
+                oppositedir.AddRange(new int[] { 1, 0, 2 });
+                break;
+            case 5:
+                oppositedir.AddRange(new int[] { 0, 1, 3 });
+                break;
+            default:
+                oppositedir.Add(Random.Range(0, 5));
+                break;
+        }
+
+        return oppositedir;
+    }
+
+    // ------------------------ COORDINATE TYPE TRANSLATION METHODS ------------------------------
+
+    /*
+     function cube_to_oddq(cube):
+    var col = cube.x
+    var row = cube.z + (cube.x - (cube.x&1)) / 2
+    return OffsetCoord(col, row)
+
+function oddq_to_cube(hex):
+    var x = hex.col
+    var z = hex.row - (hex.col - (hex.col&1)) / 2
+    var y = -x-z
+    return Cube(x, y, z)
+         */
+
+    public static Vector2Int CubeToOffset (Vector3Int cubeCoords)
+    {
+        Vector2Int offsetCoords = new Vector2Int();
+        
+        
+        return offsetCoords;
+    }
+
+    public static Vector3Int OffsetToCube (Vector2Int offsetCoords)
+    {
+        Vector3Int cubeCoords = new Vector3Int();
+
+        return cubeCoords;
     }
 
     // --------------------------------- DISTANCE METHODS ----------------------------------------
+
+    public static int CubeDistance (Vector3Int cubeCoords1, Vector3Int cubeCoords2)
+    {
+        return (
+            Mathf.Abs(cubeCoords1.x - cubeCoords2.x) 
+            + Mathf.Abs(cubeCoords1.y - cubeCoords2.y) 
+            + Mathf.Abs(cubeCoords1.z - cubeCoords2.z)
+            ) 
+            / 2;
+    }
+
+    public static int OffsetDistance (Vector2Int offsetCoords1, Vector2Int offsetCoords2)
+    {
+        return CubeDistance(OffsetToCube(offsetCoords1), OffsetToCube(offsetCoords2));
+    }
 
     // Check wether or not a certain position is in a given range param. distance to another
     // DOES account for obstacles and holes in map
@@ -223,28 +333,7 @@ public static class HexCalculator
     {
         Vector2Int trace = new Vector2Int();
 
-        for (int dir = 0; dir < 6; dir++)
-        {
-            trace.x = orig.x;
-            trace.y = orig.y;
-
-            for (int j = 0; j < range; j++)
-            {
-                trace = GetNeighborAtDir(trace, dir);
-
-                if (trace == dest)
-                    return dir;
-
-            }
-        }
-
         // Not found in any direction at range
-        return -1;
-    }
-
-
-    public static int DistanceBetween(Vector2Int orig, Vector2Int dest)
-    {
         return -1;
     }
 }
