@@ -3,14 +3,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct TurnInfo
+public class ActionInfo
 {
     // turn owner
-    // number of actions taken
     // skillrank
+    IGameCharacter turnOwner = null;
+    int skillRank_ = 3;
 
-    // bool hasteApplied
-    // bool characterDied or Incapacitated
+    bool hasteApplied_ = false;
+
+    List<int> whoDied_ = new List<int>();
+
+    public IGameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
+    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
+    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
+    public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
+
+    public void Reset() 
+    {
+        turnOwner = null;
+        skillRank_ = 3;
+        hasteApplied_ = false;
+        whoDied_.Clear();
+    }
 
     //   ~~ IDEAS ~~          => Unsure as to where this should be implemented
     // Damage applied:
@@ -36,6 +51,8 @@ public class Caroussel_R : MonoBehaviour
 
     // Key: Name of the enemy | Pair: number of enemies of said species in battle   (?)
     private Dictionary<string, int> enemyNames = new Dictionary<string, int>();
+
+    public ActionInfo actionInfo = new ActionInfo();
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
@@ -79,6 +96,9 @@ public class Caroussel_R : MonoBehaviour
     {
         int currentlyCaltulatedTurns = 0;
 
+        // Clear previous list
+        ClearPreviousQueue();
+
         // TODO: Store current countervalues and lastskillranks
 
         while (currentlyCaltulatedTurns < PRE_CALCULATED_TURNS)
@@ -98,15 +118,17 @@ public class Caroussel_R : MonoBehaviour
         // we check for 0 values too so we potentially save some comp. time
         for (int i = 1; i < battleUnits.Count; i++)
         {
-            // if (battleUnits[i].IsActive())       // => dead, [asleep or incapacitated]
-            if (battleUnits[i].CounterValue < battleUnits[index].CounterValue)
-            {
-                index = i;
-
-                if (battleUnits[index].CounterValue == 0)
+            if (battleUnits[i].IsActive)
+            {       // => not dead, [asleep or incapacitated]
+                if (battleUnits[i].CounterValue < battleUnits[index].CounterValue)
                 {
-                    foundzero = true;
-                    break;
+                    index = i;
+
+                    if (battleUnits[index].CounterValue == 0)
+                    {
+                        foundzero = true;
+                        break;
+                    }
                 }
             }
         }
@@ -115,8 +137,8 @@ public class Caroussel_R : MonoBehaviour
         {
             for (int i = 0; i < battleUnits.Count; i++)
             {
-                // if (battleUnits[i].IsActive())       // => dead, [asleep or incapacitated]
-                battleUnits[i].CounterValue -= battleUnits[index].CounterValue;
+                if (battleUnits[i].IsActive)       // => not dead, [asleep or incapacitated]
+                    battleUnits[i].CounterValue -= battleUnits[index].CounterValue;
             }
         }
 
@@ -165,5 +187,18 @@ public class Caroussel_R : MonoBehaviour
         SetNextTurn(GetNextTurnIndex());
 
         // refresh UI to show changes
+    }
+
+    private void ClearPreviousQueue()
+    {
+        entries_.Clear();
+        turnQueue.Clear();
+
+        Transform panel = gameObject.transform.GetChild(0);
+
+        for (int i = 0; i < panel.childCount; i++)
+        {
+            Destroy(panel.GetChild(i).gameObject);
+        }
     }
 }

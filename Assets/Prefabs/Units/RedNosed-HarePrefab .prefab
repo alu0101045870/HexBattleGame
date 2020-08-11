@@ -112,7 +112,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  maxStep: 5000
+  maxStep: 100
 --- !u!114 &4696203527417669402
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128,7 +128,7 @@ MonoBehaviour:
   m_BrainParameters:
     vectorObservationSize: 1
     numStackedVectorObservations: 1
-    vectorActionSize: 01000000
+    vectorActionSize: 0300000006000000
     vectorActionDescriptions: []
     vectorActionSpaceType: 0
   m_Model: {fileID: 0}
@@ -269,6 +269,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Pivot.y
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6876240036990874708, guid: 89563ea20e99a6042aac2e884627dee3,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.017524
+      objectReference: {fileID: 0}
+    - target: {fileID: 6876240036990874708, guid: 89563ea20e99a6042aac2e884627dee3,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.0149179995
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 89563ea20e99a6042aac2e884627dee3, type: 3}

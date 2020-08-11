@@ -11,12 +11,14 @@ public class RedNosedHare_R : Agent, IGameCharacter
     private bool turnOver_ = false;
     private string species_ = "Leporidae";
     private string name_ = "RedNosedHare";
+    private int id_;
     private Vector2Int ingame_position_ = new Vector2Int();
 
     private int tickspeed_;
     private int counterValue_;
     private int maxHP_;
     private int lastSkillRank_;
+    private bool isActive_ = true;
 
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
@@ -29,6 +31,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
     private void InitStatValues()
     {
+        statValues_.Clear();
         statValues_.Add("HP", 0);
         statValues_.Add("STR", 0);                  // Physical strength and damage
         statValues_.Add("MAG", 0);                  // Magic damage
@@ -41,6 +44,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
     }
     private void InitStatusEffects()
     {
+        statusEffects_.Clear();
         statusEffects_.Add("BRAVERY", 1f);          // Enhances or diminishes strength impact
         statusEffects_.Add("FAITH", 1f);            // Enhances or diminishes magic impact
         statusEffects_.Add("ARMOR", 1f);            // Enhances or diminishes resistance
@@ -62,6 +66,11 @@ public class RedNosedHare_R : Agent, IGameCharacter
             name_ = value;
             gameObject.name = value;
         }
+    }
+    public int ID
+    {
+        get { return id_; }
+        set { id_ = value; }
     }
     public int TickSpeed
     {
@@ -88,13 +97,20 @@ public class RedNosedHare_R : Agent, IGameCharacter
         get { return ingame_position_; }
         set { ingame_position_ = value; }
     }
-
-    public bool TurnOver
+    public bool IsActive
+    {
+        get { return isActive_; }
+        set { isActive_ = value; }
+    }
+    public bool ActionOver
     {
         get { return turnOver_; }
         set { turnOver_ = value; }
     }
-
+    public GameObject GameObject
+    {
+        get { return gameObject; }
+    }
     // ---------------------------------------------------------------------------------------
 
     public float GetStatusEffectByName(string name)
@@ -179,6 +195,14 @@ public class RedNosedHare_R : Agent, IGameCharacter
         lastSkillRank_ = 3;
     }
 
+    public override void OnEpisodeBegin()
+    {
+        base.OnEpisodeBegin();
+
+        if (statusEffects_.Count == 0 && statValues_.Count == 0)
+            LazyInitialize();
+    }
+
     public override void CollectObservations(VectorSensor sensor)
     {
         sensor.AddObservation(GetStatValueByName("HP"));
@@ -230,6 +254,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
             case 0: // Attack
                 {
                     Attack((int)vectorAction[1]);
+                    
                     break;
                 }
             case 1: // Move
@@ -244,7 +269,16 @@ public class RedNosedHare_R : Agent, IGameCharacter
                 }
         }
 
+        AddReward(-0.1f);
+        
         turnOver_ = true;
+    }
+
+    public void Reset()
+    {
+        isActive_ = false;
+        gameObject.SetActive(false);
+        EndEpisode();
     }
 
     // ---------------------------------------------------------------------------------------
@@ -342,13 +376,13 @@ public class RedNosedHare_R : Agent, IGameCharacter
                 destinationTile.Occupier = this;
 
                 // -------------------------------
-                Debug.Log(Name + " moved " + dir + "!");
+                //Debug.Log(Name + " moved " + dir + "!");
             }
         }
         else
         {
-            Debug.Log(Name + " could NOT move!");
-
+            // Debug.Log(Name + " could NOT move!");
+            AddReward(-1f);
         }
     }
 
@@ -363,14 +397,34 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
     public void ReceiveDamage(float amount)
     {
-        Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
+        //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
 
         // Get the new health percentage left on target
         SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
-        float percentageLeft = (float)GetStatValueByName("HP") / (float)MaxHP;
+        float percentageLeft = Mathf.Clamp((float)GetStatValueByName("HP"), 0, MaxHP) / (float)MaxHP;
 
         // Update calling target's healthbar delegate
         OnHealthChanged(percentageLeft);
+
+        if (GetStatValueByName("HP") < 0)
+        {
+            Caroussel_R.Instance.actionInfo.WhoDied_.Add(id_);
+        }
+    }
+
+    public void Die()
+    {
+        isActive_ = false;
+        gameObject.SetActive(false);
+        SetReward(-5f);
+    }
+
+    public void ResetStats()
+    {
+        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);       // CODE SMELL: NO COPYPASTING
+        SetStatusEffects(1, 1, 1, 1, 1, 1);
+
+        OnHealthChanged(100);
     }
 }
 
