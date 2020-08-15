@@ -1,39 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using MLAgents;
-using MLAgents.Sensors;
+using Unity.MLAgents;
+using Unity.MLAgents.Sensors;
 using System;
 using Random = UnityEngine.Random;
 
-public interface IGameCharacter
-{
-    string Species { get; set; }
-    string Name { get; set; }
-    int ID { get; set; }
-    int TickSpeed { get; set; }
-    int CounterValue { get; set; }
-    int MaxHP { get; set; }
-    int LastSkillRank { get; set; }
-    Vector2Int InGamePosition { get; set; }
-    bool IsActive { get; set; }
-    bool ActionOver { get; set; }
-    GameObject GameObject { get; }
-
-    float GetStatusEffectByName(string name);
-    void SetStatusEffectByName(string name, float value);
-
-    int GetStatValueByName(string name);
-    void SetStatValueByName(string name, int value);
-
-    // Agent events control
-    void Reset();
-    void RequestAct();
-    event Action<float> OnHealthChanged;
-    void ReceiveDamage(float amount);
-    void Die();
-    void ResetStats();
-}
 
 public class Lupus_R : Agent, IGameCharacter
 {
@@ -59,7 +31,7 @@ public class Lupus_R : Agent, IGameCharacter
     // ---------------------------------------------------------------------------------------
 
 
-    private void InitStatValues()
+    public void InitStatValues()
     {
         statValues_.Clear();
         statValues_.Add("HP", 0);
@@ -72,7 +44,7 @@ public class Lupus_R : Agent, IGameCharacter
         statValues_.Add("AGL", 0);                  // Agility, speed stat
         statValues_.Add("ACC", 0);                  // Accuracy, hit or miss
     }
-    private void InitStatusEffects()
+    public void InitStatusEffects()
     {
         statusEffects_.Clear();
         statusEffects_.Add("BRAVERY", 1f);          // Enhances or diminishes strength impact
@@ -126,7 +98,14 @@ public class Lupus_R : Agent, IGameCharacter
         get { return ingame_position_; }
         set { ingame_position_ = value; }
     }
-
+    public Dictionary<string, int> StatValues
+    {
+        get => statValues_;
+    }
+    public Dictionary<string, float> StatusEffects
+    {
+        get => statusEffects_;
+    }
     public bool IsActive
     {
         get { return isActive_; }
@@ -179,7 +158,7 @@ public class Lupus_R : Agent, IGameCharacter
         statValues_[name] = value;
     }
 
-    private void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
+    public void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
     {
         maxHP_ = lps;
         SetStatValueByName("HP", lps);
@@ -193,7 +172,7 @@ public class Lupus_R : Agent, IGameCharacter
         SetStatValueByName("ACC", acc);
     }
 
-    private void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
+    public void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
     {
         SetStatusEffectByName("BRAVERY", bravery);
         SetStatusEffectByName("FAITH", faith);
@@ -243,10 +222,8 @@ public class Lupus_R : Agent, IGameCharacter
         sensor.AddObservation(AdjacencySensor());
     }
 
-    public override float[] Heuristic()
+    public override void Heuristic(float[] action)
     {
-        // [skill - direction] 
-        float[] action = new float[2];
 
         int dir = TargetInRange();
 
@@ -271,7 +248,7 @@ public class Lupus_R : Agent, IGameCharacter
                 action[1] = Random.Range(0, 5);
         }
 
-        return action;
+       
     }
 
     public override void OnActionReceived(float[] vectorAction)
@@ -304,6 +281,8 @@ public class Lupus_R : Agent, IGameCharacter
     {
         isActive_ = false;
         gameObject.SetActive(false);
+
+        Debug.Log(Academy.Instance.EpisodeCount);
         EndEpisode();
     }
 

@@ -1,4 +1,4 @@
-﻿using MLAgents;
+﻿using Unity.MLAgents;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -46,18 +46,9 @@ public class BattleMap_R : MonoBehaviour
     {
         InstantiateAgents();
 
-        Academy.Instance.OnEnvironmentReset += Log();
         Initialize().Invoke();
 
         StartCoroutine(GameLoop());
-    }
-
-    Action Log()
-    {
-        return delegate ()
-        {
-            Debug.Log(Academy.Instance.EpisodeCount);
-        };
     }
 
     Action Initialize()
@@ -219,8 +210,6 @@ public class BattleMap_R : MonoBehaviour
 
     IEnumerator GameLoop()
     {
-        //Debug.LogError("LOOP STARTED");
-
         bool stopCondition = false;
         bool recalcTurns = false;
         int index;

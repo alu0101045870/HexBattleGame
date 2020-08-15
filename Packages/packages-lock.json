@@ -1,16 +1,16 @@
 {
   "dependencies": {
     "com.unity.barracuda": {
-      "version": "0.6.1-preview",
+      "version": "0.7.1-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.1.1"
+        "com.unity.burst": "1.2.3"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.1.1",
+      "version": "1.2.3",
       "depth": 2,
       "source": "registry",
       "dependencies": {
@@ -56,11 +56,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ml-agents": {
-      "version": "file:C:/Users/usuario/Desktop/ml-agents-0.15.0/com.unity.ml-agents",
+      "version": "file:C:/Users/usuario/Desktop/ml-agents-release_3/com.unity.ml-agents",
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.barracuda": "0.6.1-preview"
+        "com.unity.barracuda": "0.7.1-preview"
       }
     },
     "com.unity.test-framework": {

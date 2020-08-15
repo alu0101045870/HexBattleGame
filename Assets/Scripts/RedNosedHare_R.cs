@@ -1,5 +1,5 @@
-﻿using MLAgents;
-using MLAgents.Sensors;
+﻿using Unity.MLAgents;
+using Unity.MLAgents.Sensors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,7 +29,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
     /*                            INHERITED COMPONENT METHODS                               */
     // ---------------------------------------------------------------------------------------
 
-    private void InitStatValues()
+    public void InitStatValues()
     {
         statValues_.Clear();
         statValues_.Add("HP", 0);
@@ -42,7 +42,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
         statValues_.Add("AGL", 0);                  // Agility, speed stat
         statValues_.Add("ACC", 0);                  // Accuracy, hit or miss
     }
-    private void InitStatusEffects()
+    public void InitStatusEffects()
     {
         statusEffects_.Clear();
         statusEffects_.Add("BRAVERY", 1f);          // Enhances or diminishes strength impact
@@ -97,6 +97,14 @@ public class RedNosedHare_R : Agent, IGameCharacter
         get { return ingame_position_; }
         set { ingame_position_ = value; }
     }
+    public Dictionary<string, int> StatValues
+    {
+        get => statValues_;
+    }
+    public Dictionary<string, float> StatusEffects
+    {
+        get => statusEffects_;
+    }
     public bool IsActive
     {
         get { return isActive_; }
@@ -147,7 +155,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
         statValues_[name] = value;
     }
 
-    private void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
+    public void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
     {
         maxHP_ = lps;
         SetStatValueByName("HP", lps);
@@ -161,7 +169,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
         SetStatValueByName("ACC", acc);
     }
 
-    private void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
+    public void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
     {
         SetStatusEffectByName("BRAVERY", bravery);
         SetStatusEffectByName("FAITH", faith);
@@ -214,11 +222,8 @@ public class RedNosedHare_R : Agent, IGameCharacter
         sensor.AddObservation(AttackAdjacencySensor());             // Directions to which agent could attack
     }
 
-    public override float[] Heuristic()
+    public override void Heuristic(float[] action)
     {
-        // [skill - direction] 
-        float[] action = new float[2];
-
         int dir = TargetInRange();
 
         if (GetStatValueByName("HP") < (Mathf.RoundToInt(MaxHP * 0.35f)))
@@ -241,8 +246,6 @@ public class RedNosedHare_R : Agent, IGameCharacter
             else
                 action[1] = Random.Range(0, 5);
         }
-
-        return action;
     }
 
     public override void OnActionReceived(float[] vectorAction)
@@ -254,7 +257,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
             case 0: // Attack
                 {
                     Attack((int)vectorAction[1]);
-                    
+
                     break;
                 }
             case 1: // Move
@@ -270,7 +273,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
         }
 
         AddReward(-0.1f);
-        
+
         turnOver_ = true;
     }
 
@@ -334,7 +337,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
                 if (!neighbor.Occupied)
                     return oppositedir[i];          // return most optimal escape route (if possible)
         }
-        
+
         // If all are occupied, "failed escape"
         return -1;
     }
@@ -427,4 +430,3 @@ public class RedNosedHare_R : Agent, IGameCharacter
         OnHealthChanged(100);
     }
 }
-
