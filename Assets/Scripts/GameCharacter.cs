@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.MLAgents;
 using UnityEngine;
 
 public interface IGameCharacter
@@ -30,6 +31,8 @@ public interface IGameCharacter
     void SetStatValueByName(string name, int value);
 
     void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc);
+    void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste);
+    void SetParameters();
 
     event Action<float> OnHealthChanged;
 
@@ -41,7 +44,7 @@ public interface IGameCharacter
     void ResetStats();
 }
 
-public class GameCharacter : IGameCharacter
+public abstract class GameCharacter : Agent
 {
     private bool actionOver = false;
     private string species_ = "";
@@ -57,8 +60,6 @@ public class GameCharacter : IGameCharacter
 
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
-
-    public event Action<float> OnHealthChanged = delegate { };
 
     // ---------------------------------------------------------------------------------------
     /*                                      PROPERTIES                                      */
@@ -150,7 +151,6 @@ public class GameCharacter : IGameCharacter
 
         statusEffects_[name] = value;
     }
-
     public virtual void SetStatValueByName(string name, int value)
     {
         if (!statValues_.ContainsKey(name))
@@ -168,7 +168,6 @@ public class GameCharacter : IGameCharacter
 
         return value;
     }
-
     public virtual int GetStatValueByName(string name)
     {
         int value;
@@ -192,7 +191,6 @@ public class GameCharacter : IGameCharacter
         SetStatValueByName("AGL", agl);
         SetStatValueByName("ACC", acc);
     }
-
     public virtual void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
     {
         SetStatusEffectByName("BRAVERY", bravery);
@@ -232,26 +230,6 @@ public class GameCharacter : IGameCharacter
     }
 
     public virtual void ResetStats()
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual bool OccupierInPredatorList(HexTile neighbor)
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual bool OccupierInTargetList(HexTile neighbor)
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual bool UnitInPredatorList(IGameCharacter igc)
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual bool UnitInTargetList(IGameCharacter igc)
     {
         throw new NotImplementedException();
     }

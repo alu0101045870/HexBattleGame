@@ -171,7 +171,6 @@ public class Lupus_R : Agent, IGameCharacter
         SetStatValueByName("AGL", agl);
         SetStatValueByName("ACC", acc);
     }
-
     public void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
     {
         SetStatusEffectByName("BRAVERY", bravery);
@@ -180,6 +179,13 @@ public class Lupus_R : Agent, IGameCharacter
         SetStatusEffectByName("SHIELD", shield);
         SetStatusEffectByName("REGEN", regen);
         SetStatusEffectByName("HASTE", haste);
+    }
+
+    public void SetParameters()
+    {
+        //
+        SetStatValues(74, 7, 1, 1, 1, 2, 2, 59, 0);
+        SetStatusEffects(1, 1, 1, 1, 1, 1);
     }
 
     // ---------------------------------------------------------------------------------------

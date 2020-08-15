@@ -179,6 +179,13 @@ public class RedNosedHare_R : Agent, IGameCharacter
         SetStatusEffectByName("HASTE", haste);
     }
 
+    public void SetParameters()
+    {
+        // 
+        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
+        SetStatusEffects(1, 1, 1, 1, 1, 1);
+    }
+
     // ---------------------------------------------------------------------------------------
     /*                            AGENT ACTIONS IMPLEMENTATION                              */
     // ---------------------------------------------------------------------------------------
@@ -194,9 +201,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
 
         InitStatValues();                               // Stat initialization
         InitStatusEffects();
-
-        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
-        SetStatusEffects(1, 1, 1, 1, 1, 1);
+        SetParameters();
 
         // TickSpeed & LastSkillRank (default 3)
         tickspeed_ = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
@@ -215,11 +220,7 @@ public class RedNosedHare_R : Agent, IGameCharacter
     {
         sensor.AddObservation(GetStatValueByName("HP"));
 
-        // For future implementations, it would be interesting to have a way of 
-        // figuring out a level of "desirability" for targets in actions
-
-        sensor.AddObservation(MovementAdjacencySensor());           // Directions to which agent could move
-        sensor.AddObservation(AttackAdjacencySensor());             // Directions to which agent could attack
+        sensor.AddObservation(AdjacencySensor());           
     }
 
     public override void Heuristic(float[] action)
@@ -288,16 +289,50 @@ public class RedNosedHare_R : Agent, IGameCharacter
     /*                                  AGENT SENSOR METHODS                                */
     // ---------------------------------------------------------------------------------------
 
-    private List<float> MovementAdjacencySensor()
+    /// <summary>
+    /// This sensor is designed to give the agent an indicator of what kind of environment surrounds it
+    /// Checks 1 tile ahead in every direction [0,5]
+    /// </summary>
+    /// <returns> 
+    /// Returns a dir-sized list of floats which represent different entities:
+    /// - -1f means there is an obstacle in that direction
+    /// - 0f means direction is empty
+    /// - 1f means there is an interesting target in said direction
+    /// </returns>
+    private List<float> AdjacencySensor()
     {
         List<float> adjacencySensor = new List<float>();
 
-        return adjacencySensor;
-    }
+        HexTile currentTile = BattleMap_R.Instance.mapTiles[ingame_position_];
+        HexTile neighbor;
 
-    private List<float> AttackAdjacencySensor()
-    {
-        List<float> adjacencySensor = new List<float>();
+        for (int dir = 0; dir < 6; dir++)
+        {
+            // if there is a neighboring tile at dir
+            if (currentTile.Neighbors.TryGetValue(dir, out neighbor))
+            {
+                // if tile is occupied by an enemy or prey
+                if (neighbor.Occupied)
+                {
+                    if (neighbor.Occupier.Species.Equals("Leporidae"))
+                    {        // => Extract method (generalization for wider lists of targets)
+                        adjacencySensor.Add(1f);
+                    }
+                    else
+                    {
+                        adjacencySensor.Add(-1f);
+                    }
+                }
+                else
+                {
+                    adjacencySensor.Add(0f);
+                }
+            }
+            else
+            {
+                adjacencySensor.Add(-1f);
+            }
+        }
 
         return adjacencySensor;
     }
