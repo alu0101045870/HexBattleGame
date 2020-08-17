@@ -13,10 +13,10 @@ GameObject:
   - component: {fileID: 4696203527417669406}
   - component: {fileID: 4696203527417669405}
   - component: {fileID: 8414826927586988768}
-  - component: {fileID: 6596740633198892138}
   - component: {fileID: 1348463922494272005}
+  - component: {fileID: 6596740633198892138}
   m_Layer: 0
-  m_Name: RedNosedCopy
+  m_Name: RedNosedHarePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -113,6 +113,22 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1348463922494272005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4696203527417669404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85ca3c4b4a6857341a1eb3d73b5d2e18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 100
 --- !u!114 &6596740633198892138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -138,22 +154,6 @@ MonoBehaviour:
   TeamId: 0
   m_UseChildSensors: 1
   m_ObservableAttributeHandling: 0
---- !u!114 &1348463922494272005
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4696203527417669404}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85ca3c4b4a6857341a1eb3d73b5d2e18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
 --- !u!1001 &7893690716186791055
 PrefabInstance:
   m_ObjectHideFlags: 0

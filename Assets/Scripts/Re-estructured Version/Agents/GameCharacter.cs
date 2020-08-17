@@ -4,44 +4,41 @@ using System.Collections.Generic;
 using Unity.MLAgents;
 using UnityEngine;
 
-public interface IGameCharacter
+public class ActionInfo
 {
-    string Species { get; set; }
-    string Name { get; set; }
-    int ID { get; set; }
-    int TickSpeed { get; set; }
-    int CounterValue { get; set; }
-    int MaxHP { get; set; }
-    int LastSkillRank { get; set; }
-    Vector2Int InGamePosition { get; set; }
-    Dictionary<string, int> StatValues { get; }
-    Dictionary<string, float> StatusEffects { get; }
+    // turn owner
+    // skillrank
+    GameCharacter turnOwner = null;
+    int skillRank_ = 3;
 
-    bool IsActive { get; set; }
-    bool ActionOver { get; set; }
-    GameObject GameObject { get; }
+    bool hasteApplied_ = false;
 
-    void InitStatValues();
-    void InitStatusEffects();
+    List<int> whoDied_ = new List<int>();
 
-    float GetStatusEffectByName(string name);
-    void SetStatusEffectByName(string name, float value);
+    public GameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
+    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
+    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
+    public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
 
-    int GetStatValueByName(string name);
-    void SetStatValueByName(string name, int value);
+    public void Reset()
+    {
+        turnOwner = null;
+        skillRank_ = 3;
+        hasteApplied_ = false;
+        whoDied_.Clear();
+    }
 
-    void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc);
-    void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste);
-    void SetParameters();
+    //   ~~ IDEAS ~~          => Unsure as to where this should be implemented
+    // Damage applied:
+    // Damage receiver:
+    // Damage taken:
+    // Status/Stats change
+}
 
+
+public interface IGameChar
+{
     event Action<float> OnHealthChanged;
-
-    // Agent events control
-    void Reset();
-    void RequestAct();
-    void ReceiveDamage(float amount);
-    void Die();
-    void ResetStats();
 }
 
 public abstract class GameCharacter : Agent
@@ -114,7 +111,7 @@ public abstract class GameCharacter : Agent
         set => actionOver = value; 
     }
 
-    public virtual GameObject GameObject => throw new NotImplementedException();
+    public abstract GameObject GameObject();
 
     // ---------------------------------------------------------------------------------------
     /*                                    STATS/STATUS                                      */
@@ -205,32 +202,17 @@ public abstract class GameCharacter : Agent
     /*                               CAROUSSEL ACTION REQUEST                               */
     // ---------------------------------------------------------------------------------------
 
-    public virtual void RequestAct()
-    {
-        throw new NotImplementedException();
-    }
+    public abstract void RequestAct();
 
     // ---------------------------------------------------------------------------------------
     /*                                 BATTLE LOOP EVENTS                                   */
     // ---------------------------------------------------------------------------------------
 
-    public virtual void Die()
-    {
-        throw new NotImplementedException();
-    }
+    public abstract void Die();
 
-    public virtual void ReceiveDamage(float amount)
-    {
-        throw new NotImplementedException();
-    }
+    public abstract void ReceiveDamage(float amount);
 
-    public virtual void Reset()
-    {
-        throw new NotImplementedException();
-    }
+    public abstract void Reset();
 
-    public virtual void ResetStats()
-    {
-        throw new NotImplementedException();
-    }
+    public abstract void ResetStats();
 }

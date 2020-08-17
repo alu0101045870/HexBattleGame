@@ -6,7 +6,7 @@ using UnityEngine;
 public class HexTile : MonoBehaviour
 {
     private bool occupied_;
-    private IGameCharacter occupier_;
+    private GameCharacter occupier_;
 
     private Vector2Int position;
     private Dictionary<int, HexTile> neighbors = new Dictionary<int, HexTile>();
@@ -28,7 +28,7 @@ public class HexTile : MonoBehaviour
         get { return occupied_; }
     }
 
-    public IGameCharacter Occupier
+    public GameCharacter Occupier
     {
         get
         {

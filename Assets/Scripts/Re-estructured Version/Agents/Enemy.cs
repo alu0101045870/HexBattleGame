@@ -23,6 +23,8 @@ public abstract class Enemy : GameCharacter
 
     public virtual bool OccupierInPredatorList(HexTile neighbor)
     {
+        if (!neighbor.Occupied) return false;
+
         for (int i = 0; i < predatorList_.Count; i++)
         {
             if (neighbor.Occupier.Species.Equals(predatorList_[i]))
@@ -34,7 +36,9 @@ public abstract class Enemy : GameCharacter
 
     public virtual bool OccupierInTargetList(HexTile neighbor)
     {
-        for (int i = 0; i < predatorList_.Count; i++)
+        if (!neighbor.Occupied) return false;
+
+        for (int i = 0; i < targetList_.Count; i++)
         {
             if (neighbor.Occupier.Species.Equals(targetList_[i]))
                 return true;
@@ -43,7 +47,7 @@ public abstract class Enemy : GameCharacter
         return false;
     }
 
-    public virtual bool UnitInPredatorList(IGameCharacter igc)
+    public virtual bool UnitInPredatorList(GameCharacter igc)
     {
         for (int i = 0; i < predatorList_.Count; i++)
         {
@@ -54,9 +58,9 @@ public abstract class Enemy : GameCharacter
         return false;
     }
 
-    public virtual bool UnitInTargetList(IGameCharacter igc)
+    public virtual bool UnitInTargetList(GameCharacter igc)
     {
-        for (int i = 0; i < predatorList_.Count; i++)
+        for (int i = 0; i < targetList_.Count; i++)
         {
             if (igc.Species.Equals(targetList_[i]))
                 return true;
@@ -74,7 +78,7 @@ public abstract class Enemy : GameCharacter
     {
         List<float> adjacencySensor = new List<float>();
 
-        HexTile currentTile = BattleMap_R.Instance.mapTiles[InGamePosition];
+        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
         HexTile neighbor;
 
         for (int dir = 0; dir < 6; dir++)
@@ -112,11 +116,11 @@ public abstract class Enemy : GameCharacter
         return adjacencySensor;
     }
 
-    public List<IGameCharacter> PredatorsInSightSensor()                // ------------------------ TODO: Sight perception sensor implementation
+    public List<GameCharacter> PredatorsInSightSensor()                // ------------------------ TODO: Sight perception sensor implementation
     {
-        List<IGameCharacter> predators = new List<IGameCharacter>();
+        List<GameCharacter> predators = new List<GameCharacter>();
 
-        foreach (IGameCharacter igc in BattleMap_R.Instance.battleUnits_)
+        foreach (GameCharacter igc in BattleMap.Instance.battleUnits_)
         {
             if (UnitInPredatorList(igc))
             {
@@ -127,11 +131,11 @@ public abstract class Enemy : GameCharacter
         return predators;
     }
 
-    private List<IGameCharacter> ObjectivesInSightSensor()              // ------------------------ TODO: Sight perception sensor implementation
+    public List<GameCharacter> ObjectivesInSightSensor()              // ------------------------ TODO: Sight perception sensor implementation
     {
-        List<IGameCharacter> objectives = new List<IGameCharacter>();
+        List<GameCharacter> objectives = new List<GameCharacter>();
 
-        foreach (IGameCharacter igc in BattleMap_R.Instance.battleUnits_)
+        foreach (GameCharacter igc in BattleMap.Instance.battleUnits_)
         {
             if (UnitInTargetList(igc))
             {
@@ -145,7 +149,7 @@ public abstract class Enemy : GameCharacter
 
 public abstract class Canis : Enemy
 {
-    public Canis(IEnumerable<string> targetList, IEnumerable<string> predatorList) : base(targetList, predatorList)
+    public Canis() : base(new string[] { "Player", "Leporidae" }, new string[] { "Abomination" })
     {
         Species = "Canis";
     }

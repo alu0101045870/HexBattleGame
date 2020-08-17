@@ -4,15 +4,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleMap_R : MonoBehaviour
+public class BattleMap : MonoBehaviour
 {
-    public static BattleMap_R Instance { get; private set; }
+    public static BattleMap Instance { get; private set; }
 
     public GameObject hexTilePrefab;
     public GameObject obstaclePrefab;
-    
-    public GameObject lupusPrefab;
-    public GameObject rnhPrefab;
 
     [SerializeField] private List<GameObject> enemyPrefabs;
     [SerializeField] private List<TextAsset> mapFiles;
@@ -22,7 +19,7 @@ public class BattleMap_R : MonoBehaviour
     // ---------------------------------------------------------------------------------------
 
     public Dictionary<Vector2Int, HexTile> mapTiles = new Dictionary<Vector2Int, HexTile>();
-    public List<IGameCharacter> battleUnits_ = new List<IGameCharacter>();
+    public List<GameCharacter> battleUnits_ = new List<GameCharacter>();
     public Dictionary<string, int> enemyNames = new Dictionary<string, int>();
 
     // ---------------------------------------------------------------------------------------
@@ -58,7 +55,7 @@ public class BattleMap_R : MonoBehaviour
         return delegate ()
         {
             CleanUpBattleMap();
-            
+
             InitializeMap();
             InitializeAgents();         // =>   Initialize agents + their positions
             InitializeCaroussel();
@@ -72,7 +69,7 @@ public class BattleMap_R : MonoBehaviour
     void InitializeMap()
     {
         string[] mapData = mapFiles[UnityEngine.Random.Range(0, mapFiles.Count)].text.Split(' ', '\n');
-        
+
         int maxRow = int.MinValue, maxCol = int.MinValue, minRow = int.MaxValue, minCol = int.MaxValue;
         int row, col;
 
@@ -84,7 +81,7 @@ public class BattleMap_R : MonoBehaviour
         {
             row = int.Parse(mapData[i]);
             col = int.Parse(mapData[i + 1]);
-            
+
             position = new Vector2Int(row, col);
             tile = Instantiate(hexTilePrefab, HexCalculator.Position(position.y, position.x), Quaternion.identity, this.transform);
 
@@ -96,7 +93,7 @@ public class BattleMap_R : MonoBehaviour
             if (maxCol < col) maxCol = col;
             if (minRow > row) minRow = row;
             if (minCol > col) minCol = col;
- 
+
             i += 2;
         }
 
@@ -118,7 +115,8 @@ public class BattleMap_R : MonoBehaviour
         HexCalculator.SetNeighborsInMap(mapTiles);
     }
 
-    void InstantiateAgents() {
+    void InstantiateAgents()
+    {
 
         // In a real game scenario, number and variety of enemies would be decided 
         // randomly from the prefab list
@@ -128,7 +126,7 @@ public class BattleMap_R : MonoBehaviour
         int[] NUM_AGENTS = new int[] { 1, 1 };
 
         GameObject go;
-        IGameCharacter agent;
+        GameCharacter agent;
 
         if (NUM_AGENTS.Length != enemyPrefabs.Count)
         {
@@ -140,7 +138,7 @@ public class BattleMap_R : MonoBehaviour
             for (int spawn = 0; spawn < NUM_AGENTS[i]; spawn++)
             {
                 go = Instantiate(enemyPrefabs[i]);
-                agent = go.GetComponent<IGameCharacter>();
+                agent = go.GetComponent<GameCharacter>();
 
                 if (!enemyNames.ContainsKey(agent.Name))
                 {
@@ -153,8 +151,8 @@ public class BattleMap_R : MonoBehaviour
                     agent.Name += " (" + enemyNames[agent.Name] + ")";
                 }
 
-                battleUnits_.Add(go.GetComponent<IGameCharacter>());
-                go.GetComponent<IGameCharacter>().ID = battleUnits_.Count - 1;
+                battleUnits_.Add(agent);
+                agent.ID = battleUnits_.Count - 1;
             }
         }
 
@@ -163,12 +161,12 @@ public class BattleMap_R : MonoBehaviour
     void InitializeAgents()
     {
         GameObject go;
-        IGameCharacter agent;
+        GameCharacter agent;
 
         // Ensure all agents are active
         for (int i = 0; i < battleUnits_.Count; i++)
         {
-            battleUnits_[i].GameObject.SetActive(true);
+            battleUnits_[i].GameObject().SetActive(true);
             battleUnits_[i].IsActive = true;
             battleUnits_[i].ResetStats();
         }
@@ -180,8 +178,8 @@ public class BattleMap_R : MonoBehaviour
          */
 
         Vector2Int[] keys = new Vector2Int[] {
-            new Vector2Int(2, 3) , 
-            new Vector2Int(2, 1) 
+            new Vector2Int(2, 3) ,
+            new Vector2Int(2, 1)
         };                                        // Fixed for testing purposes only!
 
         if (keys.Length != enemyPrefabs.Count)
@@ -193,7 +191,7 @@ public class BattleMap_R : MonoBehaviour
         for (int i = 0; i < keys.Length; i++)
         {
             agent = battleUnits_[i];
-            go = agent.GameObject;
+            go = agent.GameObject();
 
             agent.InGamePosition = keys[i];
             go.transform.position = HexCalculator.CharacterPosition(keys[i]);
@@ -204,10 +202,11 @@ public class BattleMap_R : MonoBehaviour
 
     void InitializeCaroussel()
     {
-        Caroussel_R.Instance.CalculateICVs();
-        Caroussel_R.Instance.PreCalculateTurns();
+        Caroussel.Instance.CalculateICVs();
+        Caroussel.Instance.PreCalculateTurns();
     }
 
+    
     IEnumerator GameLoop()
     {
         bool stopCondition = false;
@@ -218,8 +217,8 @@ public class BattleMap_R : MonoBehaviour
         {
             //Debug.LogWarning("Turn!");
 
-            index = Caroussel_R.Instance.NextTurnOwner();
-            Caroussel_R.Instance.actionInfo.TurnOwner = battleUnits_[index];
+            index = Caroussel.Instance.NextTurnOwner();
+            Caroussel.Instance.actionInfo.TurnOwner = battleUnits_[index];
 
             for (int j = 0; j < battleUnits_[index].GetStatValueByName("ACT"); j++)
             {
@@ -241,12 +240,12 @@ public class BattleMap_R : MonoBehaviour
 
             if (!stopCondition)
             {
-                Caroussel_R.Instance.PassTurn();
+                Caroussel.Instance.PassTurn();
 
                 if (recalcTurns)
                 {
                     // Re-calculate turns
-                    Caroussel_R.Instance.PreCalculateTurns();
+                    Caroussel.Instance.PreCalculateTurns();
                     recalcTurns = false;
                 }
             }
@@ -257,18 +256,19 @@ public class BattleMap_R : MonoBehaviour
             }
         }
     }
+    
 
     bool CheckDeaths()
     {
         // Remove dead unit(s) from caroussel and game on the process
-        if (Caroussel_R.Instance.actionInfo.WhoDied_.Count > 0)
+        if (Caroussel.Instance.actionInfo.WhoDied_.Count > 0)
         {
-            for (int i = 0; i < Caroussel_R.Instance.actionInfo.WhoDied_.Count; i++)
+            for (int i = 0; i < Caroussel.Instance.actionInfo.WhoDied_.Count; i++)
             {
-                battleUnits_[Caroussel_R.Instance.actionInfo.WhoDied_[i]].Die();
+                battleUnits_[Caroussel.Instance.actionInfo.WhoDied_[i]].Die();
             }
 
-            Caroussel_R.Instance.actionInfo.WhoDied_.Clear();
+            Caroussel.Instance.actionInfo.WhoDied_.Clear();
 
             return true;
         }
@@ -308,4 +308,3 @@ public class BattleMap_R : MonoBehaviour
         Initialize().Invoke();
     }
 }
-

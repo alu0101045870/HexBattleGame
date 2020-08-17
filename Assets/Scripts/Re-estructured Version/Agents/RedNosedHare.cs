@@ -4,10 +4,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
+using Random = UnityEngine.Random;
 
-public class RedNosedHare : Leporidae
+public class RedNosedHare : Leporidae, IGameChar
 {
     public event Action<float> OnHealthChanged = delegate { };
+
+    void Awake()
+    {
+        Name = "RedNosedHare";
+    }
 
     // ---------------------------------------------------------------------------------------
     /*                                      PROPERTIES                                      */
@@ -17,6 +23,21 @@ public class RedNosedHare : Leporidae
     {
         SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
+    }
+
+    public override string Name
+    {
+        get => base.Name;
+        set
+        {
+            base.Name = value;
+            gameObject.name = value;
+        }
+    }
+
+    public override GameObject GameObject()
+    {
+        return gameObject;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -39,8 +60,6 @@ public class RedNosedHare : Leporidae
         // TickSpeed & LastSkillRank (default 3)
         TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
         LastSkillRank = 3;
-
-        Debug.Log(GetStatValueByName("AGL"));
     }
 
     public override void OnEpisodeBegin()
@@ -130,15 +149,15 @@ public class RedNosedHare : Leporidae
 
     private int TargetInRange()                                         // ------------------------ TODO: Actual implementation vs player scenarios
     {
-        HexTile currentTile = BattleMap_R.Instance.mapTiles[InGamePosition];
+        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
 
         return -1;
     }
 
     private int RunnawayDir()                                            // ---------------------- TODO: Implemetation for several predator scenarios
     {
-        List<IGameCharacter> detectedEnemies = PredatorsInSightSensor();
-        HexTile currentTile = BattleMap_R.Instance.mapTiles[InGamePosition];
+        List<GameCharacter> detectedEnemies = PredatorsInSightSensor();
+        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
         HexTile neighbor;
 
         //
@@ -164,7 +183,7 @@ public class RedNosedHare : Leporidae
     {
         Debug.Log(Name + "Attacked " + dir + "!");
 
-        IGameCharacter target = BattleMap_R.Instance.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+        GameCharacter target = BattleMap.Instance.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
         float damageApplied;
 
         if (target != null && UnitInTargetList(target))
@@ -191,16 +210,16 @@ public class RedNosedHare : Leporidae
         HexTile destinationTile;
         Vector2Int destination;
 
-        if (BattleMap_R.Instance.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
+        if (BattleMap.Instance.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
         {
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
                 gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
-                BattleMap_R.Instance.mapTiles[InGamePosition].EmptyTile();
+                BattleMap.Instance.mapTiles[InGamePosition].EmptyTile();
 
                 InGamePosition = destination;
-                //destinationTile.Occupier = this;
+                destinationTile.Occupier = this;
 
                 // -------------------------------
                 //Debug.Log(Name + " moved " + dir + "!");
@@ -235,7 +254,7 @@ public class RedNosedHare : Leporidae
 
         if (GetStatValueByName("HP") < 0)
         {
-            Caroussel_R.Instance.actionInfo.WhoDied_.Add(ID);
+            Caroussel.Instance.actionInfo.WhoDied_.Add(ID);
         }
     }
 

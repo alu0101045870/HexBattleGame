@@ -331,9 +331,6 @@ function oddq_to_cube(hex):
     // Goes in a straight line, ignoring obstacles and holes
     public static int InLineRange(Vector2Int orig, Vector2Int dest, int range)
     {
-        Vector2Int trace = new Vector2Int();
-
-        // Not found in any direction at range
-        return -1;
+        throw new NotImplementedException();
     }
 }

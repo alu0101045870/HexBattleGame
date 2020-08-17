@@ -11,7 +11,7 @@ public class Healthbar : MonoBehaviour
 
     private void Awake()
     {
-        GetComponentInParent<IGameCharacter>().OnHealthChanged += HandleHealthChanged;
+        GetComponentInParent<IGameChar>().OnHealthChanged += HandleHealthChanged;
     }
 
     private void HandleHealthChanged(float percentage)

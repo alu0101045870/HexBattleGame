@@ -3,40 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ActionInfo
+public class Caroussel : MonoBehaviour
 {
-    // turn owner
-    // skillrank
-    IGameCharacter turnOwner = null;
-    int skillRank_ = 3;
-
-    bool hasteApplied_ = false;
-
-    List<int> whoDied_ = new List<int>();
-
-    public IGameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
-    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
-    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
-    public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
-
-    public void Reset() 
-    {
-        turnOwner = null;
-        skillRank_ = 3;
-        hasteApplied_ = false;
-        whoDied_.Clear();
-    }
-
-    //   ~~ IDEAS ~~          => Unsure as to where this should be implemented
-    // Damage applied:
-    // Damage receiver:
-    // Damage taken:
-    // Status/Stats change
-}
-
-public class Caroussel_R : MonoBehaviour
-{
-    public static Caroussel_R Instance { get; private set; }
+    public static Caroussel Instance { get; private set; }
 
     public GameObject entryPrefab;
 
@@ -77,7 +46,7 @@ public class Caroussel_R : MonoBehaviour
     /// <param name="battleUnits_"></param>
     public void CalculateICVs()
     {
-        List<IGameCharacter> battleUnits = BattleMap_R.Instance.battleUnits_;
+        List<GameCharacter> battleUnits = BattleMap.Instance.battleUnits_;
 
         for (int i = 0; i < battleUnits.Count; i++)
         {
@@ -111,7 +80,7 @@ public class Caroussel_R : MonoBehaviour
 
     private int GetNextTurnIndex()
     {
-        List<IGameCharacter> battleUnits = BattleMap_R.Instance.battleUnits_;
+        List<GameCharacter> battleUnits = BattleMap.Instance.battleUnits_;
         int index = 0;
         bool foundzero = false;
 
@@ -150,17 +119,17 @@ public class Caroussel_R : MonoBehaviour
         Transform contentPanel = transform.GetChild(0).transform;
         GameObject go = Instantiate(entryPrefab, contentPanel);
 
-        go.GetComponent<ICarousselEntry>().SetTurnOwner(index, BattleMap_R.Instance.battleUnits_[index].Name);
+        go.GetComponent<ICarousselEntry>().SetTurnOwner(index, BattleMap.Instance.battleUnits_[index].Name);
 
         entries_.Enqueue(go.GetComponent<ICarousselEntry>());
 
-        BattleMap_R.Instance.battleUnits_[index].CounterValue = StatCalculator.CalculateCounter(
-                BattleMap_R.Instance.battleUnits_[index].TickSpeed,
-                BattleMap_R.Instance.battleUnits_[index].LastSkillRank,
-                BattleMap_R.Instance.battleUnits_[index].GetStatusEffectByName("HASTE")
+        BattleMap.Instance.battleUnits_[index].CounterValue = StatCalculator.CalculateCounter(
+                BattleMap.Instance.battleUnits_[index].TickSpeed,
+                BattleMap.Instance.battleUnits_[index].LastSkillRank,
+                BattleMap.Instance.battleUnits_[index].GetStatusEffectByName("HASTE")
                 );
 
-        BattleMap_R.Instance.battleUnits_[index].LastSkillRank = 3;
+        BattleMap.Instance.battleUnits_[index].LastSkillRank = 3;
     }
 
     public int NextTurnOwner()
