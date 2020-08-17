@@ -77,7 +77,7 @@ public static class StatCalculator
     /// </summary>
     /// <param name="Def">Defensive Stat (Magical or Phisical)</param>
     /// <returns></returns>
-    private static int DefNumCalc(int Def) 
+    private static int DefNumCalc(float Def) 
     {
         return Mathf.FloorToInt(Mathf.Pow(Def - 280.4f, 2) / 110 + 16);
     }
@@ -88,12 +88,12 @@ public static class StatCalculator
     /// <param name="BaseDmg"></param>
     /// <param name="DefNum"></param>
     /// <returns></returns>
-    private static int BaseDmgReduction(int BaseDmg, int Def)
+    private static int BaseDmgReduction(float BaseDmg, float Def)
     {
-        int defNum = DefNumCalc(Def);
-        int basedmg2 = BaseDmg * defNum / 730;
+        float defNum = DefNumCalc(Def);
+        float basedmg2 = BaseDmg * (defNum / 730f);
 
-        return Mathf.FloorToInt(basedmg2 * (730 - (Def * 51 - Mathf.Pow(Def, 2) / 11) / 10) % 730);
+        return Mathf.FloorToInt(basedmg2 * (730 - (Def * 51 - Mathf.Pow(Def, 2) / 11) / 10) / 730);
     }
 
     /// <summary>
@@ -105,20 +105,20 @@ public static class StatCalculator
     /// <returns>
     /// Base Physical Damage dealt.
     /// </returns>
-    private static int PhysicalFormula(int Stat, int DmgConst)
+    private static int PhysicalFormula(float Stat, float DmgConst)
     {
         if (Stat < 0 || Stat > 255) return -1;
         return Mathf.FloorToInt(((Mathf.Pow(Stat, 3) / 32) + 32) * (DmgConst / 16)); 
     }
-    
+
     /// <summary>
-    /// 
+    /// Physical Damage Calculation process.
     /// </summary>
-    /// <param name="Stat"></param>
-    /// <param name="DmgConst"></param>
-    /// <param name="Def"></param>
-    /// <returns></returns>
-    public static int PhysicalDmgCalc(int Stat, int DmgConst, int Def)
+    /// <param name="Stat">The Strength Stat of the attacking unit</param>
+    /// <param name="DmgConst">Damage Constant of the used skill. Every damaging skill in the game has a Damage Constant</param>
+    /// <param name="Def">Defensive Stat</param>
+    /// <returns> Damage Dealt to unit </returns>
+    public static int PhysicalDmgCalc(float Stat, float DmgConst, float Def)
     {
         int BaseDmg = PhysicalFormula(Stat, DmgConst);
 
@@ -139,7 +139,7 @@ public static class StatCalculator
     /// <param name="Stat"></param>
     /// <param name="DmgConst"></param>
     /// <returns> </returns>
-    private static int MagicalFormula(int Stat, int DmgConst)
+    private static int MagicalFormula(float Stat, float DmgConst)
     {
         if (Stat < 0 || Stat > 255) return -1;
         return Mathf.FloorToInt(DmgConst * (Mathf.Pow(Stat,2) / 6 + DmgConst) / 4);
@@ -152,7 +152,7 @@ public static class StatCalculator
     /// <param name="DmgConst"></param>
     /// <param name="MagDef"></param>
     /// <returns></returns>
-    public static int MagicalDmgCalc(int Stat, int DmgConst, int MagDef)
+    public static int MagicalDmgCalc(float Stat, float DmgConst, float MagDef)
     {
         int BaseDmg = MagicalFormula(Stat, DmgConst);
 
