@@ -78,7 +78,7 @@ public abstract class Enemy : GameCharacter
     {
         List<float> adjacencySensor = new List<float>();
 
-        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
         HexTile neighbor;
 
         for (int dir = 0; dir < 6; dir++)
@@ -120,7 +120,7 @@ public abstract class Enemy : GameCharacter
     {
         List<GameCharacter> predators = new List<GameCharacter>();
 
-        foreach (GameCharacter igc in BattleMap.Instance.battleUnits_)
+        foreach (GameCharacter igc in BattleMap_.battleUnits_)
         {
             if (UnitInPredatorList(igc))
             {
@@ -135,7 +135,7 @@ public abstract class Enemy : GameCharacter
     {
         List<GameCharacter> objectives = new List<GameCharacter>();
 
-        foreach (GameCharacter igc in BattleMap.Instance.battleUnits_)
+        foreach (GameCharacter igc in BattleMap_.battleUnits_)
         {
             if (UnitInTargetList(igc))
             {

@@ -1,18 +1,29 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
-using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class Lupus : Canis, IGameChar
+public class RedNosedHare : Leporidae, IGameChar
 {
     public event Action<float> OnHealthChanged = delegate { };
 
-    void Awake() 
+    void Awake()
     {
-        Name = "Lupus";    
+        Name = "RedNosedHare";
+    }
+
+    private void InitAgent()
+    {
+        InitStatValues();                               // Stat initialization
+        InitStatusEffects();
+        SetParameters();
+
+        // TickSpeed & LastSkillRank (default 3)
+        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
+        LastSkillRank = 3;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -21,8 +32,7 @@ public class Lupus : Canis, IGameChar
 
     public override void SetParameters()
     {
-        //
-        SetStatValues(74, 7, 1, 1, 1, 2, 2, 59, 0);
+        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
     }
 
@@ -54,13 +64,7 @@ public class Lupus : Canis, IGameChar
     {
         gameObject.tag = "Enemy";
 
-        InitStatValues();                               // Stat initialization
-        InitStatusEffects();
-        SetParameters();
-
-        // TickSpeed & LastSkillRank (default 3)
-        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
-        LastSkillRank = 3;
+        InitAgent();
     }
 
     public override void OnEpisodeBegin()
@@ -68,7 +72,9 @@ public class Lupus : Canis, IGameChar
         base.OnEpisodeBegin();
 
         if (StatusEffects.Count == 0 && StatValues.Count == 0)
-            LazyInitialize();
+        {
+            InitAgent();
+        }
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -96,14 +102,13 @@ public class Lupus : Canis, IGameChar
         else
         {
             action[0] = 1f;
-            dir = ChaseDir();
+            dir = RunnawayDir();
 
             if (dir != -1)
                 action[1] = dir;
             else
-                action[1] = Random.Range(0, 5);
+                action[1] = UnityEngine.Random.Range(0, 5);
         }
-
 
     }
 
@@ -116,6 +121,7 @@ public class Lupus : Canis, IGameChar
             case 0: // Attack
                 {
                     Attack((int)vectorAction[1]);
+
                     break;
                 }
             case 1: // Move
@@ -130,6 +136,8 @@ public class Lupus : Canis, IGameChar
                 }
         }
 
+        AddReward(-0.1f);
+
         ActionOver = true;
     }
 
@@ -138,7 +146,7 @@ public class Lupus : Canis, IGameChar
         IsActive = false;
         gameObject.SetActive(false);
 
-        Debug.Log(Academy.Instance.EpisodeCount);
+        Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
         EndEpisode();
     }
 
@@ -146,45 +154,31 @@ public class Lupus : Canis, IGameChar
     /*                                  AGENT SENSOR METHODS                                */
     // ---------------------------------------------------------------------------------------
 
-    /// <summary>
-    ///     Utilization of hex mathematics to deduce general direction towards a certain tile
-    /// </summary>
-    /// <returns>
-    ///     A suboptimal movement dir towards closest target
-    /// </returns>
-    private int ChaseDir()                                            // ---------------------- TODO: Implemetation for several objective scenarios
+    private int TargetInRange()                                         // ------------------------ TODO: Actual implementation vs player scenarios
     {
-        List<GameCharacter> detectedEnemies = ObjectivesInSightSensor();
-        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
 
-        //  TODO: Which is my most desirable prey?
-        int dir = HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition);
-
-        return dir;
+        return -1;
     }
 
-    /// <summary>
-    /// Checks one tile ahead in every direction in search for enemies
-    /// </summary>
-    /// <returns> Direction the enemy is in [0, 5]. If none were found, returns -1.</returns>
-    private int TargetInRange()
+    private int RunnawayDir()                                            // ---------------------- TODO: Implemetation for several predator scenarios
     {
-        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
+        List<GameCharacter> detectedEnemies = PredatorsInSightSensor();
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
         HexTile neighbor;
 
-        for (int i = 0; i < 6; i++)
-        {
-            // if tile is occupied by an enemy or prey
-            if (currentTile.Neighbors.TryGetValue(i, out neighbor))
-            {
+        //
+        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition));
 
-                if (OccupierInTargetList(neighbor))            // => Extract method (generalization)
-                {
-                    return i;
-                }
-            }
+        // Check directions available
+        for (int i = 0; i < oppositedir.Count; i++)
+        {
+            if (currentTile.Neighbors.TryGetValue(oppositedir[i], out neighbor))
+                if (!neighbor.Occupied)
+                    return oppositedir[i];          // return most optimal escape route (if possible)
         }
 
+        // If all are occupied, "failed escape"
         return -1;
     }
 
@@ -194,11 +188,12 @@ public class Lupus : Canis, IGameChar
 
     void Attack(int dir)
     {
-        // Calculate damage on target
-        GameCharacter target = BattleMap.Instance.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+        Debug.Log(Name + "Attacked " + dir + "!");
+
+        GameCharacter target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
         float damageApplied;
 
-        if (target != null)
+        if (target != null && UnitInTargetList(target))
         {
             damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
             //Debug.Log(Name + " did " + damageApplied + "damage!");
@@ -222,13 +217,13 @@ public class Lupus : Canis, IGameChar
         HexTile destinationTile;
         Vector2Int destination;
 
-        if (BattleMap.Instance.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
+        if (BattleMap_.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
         {
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
                 gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
-                BattleMap.Instance.mapTiles[InGamePosition].EmptyTile();
+                BattleMap_.mapTiles[InGamePosition].EmptyTile();
 
                 InGamePosition = destination;
                 destinationTile.Occupier = this;
@@ -239,15 +234,14 @@ public class Lupus : Canis, IGameChar
         }
         else
         {
-            Debug.Log(Name + " could NOT move!");
-
+            // Debug.Log(Name + " could NOT move!");
             AddReward(-1f);
         }
     }
 
     void Defend(int dir)
     {
-        //Debug.Log(Name + " defended!");
+        Debug.Log(Name + " defended!");
     }
 
     // ---------------------------------------------------------------------------------------
@@ -267,7 +261,7 @@ public class Lupus : Canis, IGameChar
 
         if (GetStatValueByName("HP") < 0)
         {
-            Caroussel.Instance.actionInfo.WhoDied_.Add(ID);
+            Caroussel_.actionInfo.WhoDied_.Add(ID);
         }
     }
 

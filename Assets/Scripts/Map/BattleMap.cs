@@ -6,13 +6,15 @@ using UnityEngine;
 
 public class BattleMap : MonoBehaviour
 {
-    public static BattleMap Instance { get; private set; }
-
     public GameObject hexTilePrefab;
     public GameObject obstaclePrefab;
 
     [SerializeField] private List<GameObject> enemyPrefabs;
     [SerializeField] private List<TextAsset> mapFiles;
+    [SerializeField] private Caroussel caroussel;
+
+    public int OffsetCol;
+    public int OffsetRow;
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS MEMBERS                                     */
@@ -25,19 +27,6 @@ public class BattleMap : MonoBehaviour
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
     // ---------------------------------------------------------------------------------------
-
-    void Awake()
-    {
-        // Singleton pattern implementation: no more than a single instance of BattleMap on scene
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
 
     void Start()
     {
@@ -153,6 +142,9 @@ public class BattleMap : MonoBehaviour
 
                 battleUnits_.Add(agent);
                 agent.ID = battleUnits_.Count - 1;
+                
+                agent.BattleMap_ = this;
+                agent.Caroussel_ = this.caroussel;
             }
         }
 
@@ -202,8 +194,8 @@ public class BattleMap : MonoBehaviour
 
     void InitializeCaroussel()
     {
-        Caroussel.Instance.CalculateICVs();
-        Caroussel.Instance.PreCalculateTurns();
+        caroussel.CalculateICVs();
+        caroussel.PreCalculateTurns();
     }
 
     
@@ -217,8 +209,8 @@ public class BattleMap : MonoBehaviour
         {
             //Debug.LogWarning("Turn!");
 
-            index = Caroussel.Instance.NextTurnOwner();
-            Caroussel.Instance.actionInfo.TurnOwner = battleUnits_[index];
+            index = caroussel.NextTurnOwner();
+            caroussel.actionInfo.TurnOwner = battleUnits_[index];
 
             for (int j = 0; j < battleUnits_[index].GetStatValueByName("ACT"); j++)
             {
@@ -240,12 +232,12 @@ public class BattleMap : MonoBehaviour
 
             if (!stopCondition)
             {
-                Caroussel.Instance.PassTurn();
+                caroussel.PassTurn();
 
                 if (recalcTurns)
                 {
                     // Re-calculate turns
-                    Caroussel.Instance.PreCalculateTurns();
+                    caroussel.PreCalculateTurns();
                     recalcTurns = false;
                 }
             }
@@ -261,14 +253,14 @@ public class BattleMap : MonoBehaviour
     bool CheckDeaths()
     {
         // Remove dead unit(s) from caroussel and game on the process
-        if (Caroussel.Instance.actionInfo.WhoDied_.Count > 0)
+        if (caroussel.actionInfo.WhoDied_.Count > 0)
         {
-            for (int i = 0; i < Caroussel.Instance.actionInfo.WhoDied_.Count; i++)
+            for (int i = 0; i < caroussel.actionInfo.WhoDied_.Count; i++)
             {
-                battleUnits_[Caroussel.Instance.actionInfo.WhoDied_[i]].Die();
+                battleUnits_[caroussel.actionInfo.WhoDied_[i]].Die();
             }
 
-            Caroussel.Instance.actionInfo.WhoDied_.Clear();
+            caroussel.actionInfo.WhoDied_.Clear();
 
             return true;
         }

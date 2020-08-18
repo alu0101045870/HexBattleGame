@@ -58,6 +58,9 @@ public abstract class GameCharacter : Agent
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
     private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
 
+    private BattleMap battleMap;
+    private Caroussel caroussel;
+
     // ---------------------------------------------------------------------------------------
     /*                                      PROPERTIES                                      */
     // ---------------------------------------------------------------------------------------
@@ -110,6 +113,8 @@ public abstract class GameCharacter : Agent
         get => actionOver; 
         set => actionOver = value; 
     }
+    public BattleMap BattleMap_ { get => battleMap; set => battleMap = value; }
+    public Caroussel Caroussel_ { get => caroussel; set => caroussel = value; }
 
     public abstract GameObject GameObject();
 

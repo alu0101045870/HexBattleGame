@@ -1,18 +1,29 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class RedNosedHare : Leporidae, IGameChar
+public class Lupus : Canis, IGameChar
 {
     public event Action<float> OnHealthChanged = delegate { };
 
-    void Awake()
+    void Awake() 
     {
-        Name = "RedNosedHare";
+        Name = "Lupus";    
+    }
+
+    private void InitAgent()
+    {
+        InitStatValues();                               // Stat initialization
+        InitStatusEffects();
+        SetParameters();
+
+        // TickSpeed & LastSkillRank (default 3)
+        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
+        LastSkillRank = 3;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -21,7 +32,8 @@ public class RedNosedHare : Leporidae, IGameChar
 
     public override void SetParameters()
     {
-        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
+        //
+        SetStatValues(74, 7, 1, 1, 1, 2, 2, 59, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
     }
 
@@ -53,13 +65,7 @@ public class RedNosedHare : Leporidae, IGameChar
     {
         gameObject.tag = "Enemy";
 
-        InitStatValues();                               // Stat initialization
-        InitStatusEffects();
-        SetParameters();
-
-        // TickSpeed & LastSkillRank (default 3)
-        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
-        LastSkillRank = 3;
+        InitAgent();
     }
 
     public override void OnEpisodeBegin()
@@ -67,7 +73,7 @@ public class RedNosedHare : Leporidae, IGameChar
         base.OnEpisodeBegin();
 
         if (StatusEffects.Count == 0 && StatValues.Count == 0)
-            LazyInitialize();
+            InitAgent();
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -95,13 +101,14 @@ public class RedNosedHare : Leporidae, IGameChar
         else
         {
             action[0] = 1f;
-            dir = RunnawayDir();
+            dir = ChaseDir();
 
             if (dir != -1)
                 action[1] = dir;
             else
-                action[1] = UnityEngine.Random.Range(0, 5);
+                action[1] = Random.Range(0, 5);
         }
+
 
     }
 
@@ -114,7 +121,6 @@ public class RedNosedHare : Leporidae, IGameChar
             case 0: // Attack
                 {
                     Attack((int)vectorAction[1]);
-
                     break;
                 }
             case 1: // Move
@@ -129,8 +135,6 @@ public class RedNosedHare : Leporidae, IGameChar
                 }
         }
 
-        AddReward(-0.1f);
-
         ActionOver = true;
     }
 
@@ -139,7 +143,7 @@ public class RedNosedHare : Leporidae, IGameChar
         IsActive = false;
         gameObject.SetActive(false);
 
-        Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
+        Debug.Log(Academy.Instance.EpisodeCount);
         EndEpisode();
     }
 
@@ -147,31 +151,45 @@ public class RedNosedHare : Leporidae, IGameChar
     /*                                  AGENT SENSOR METHODS                                */
     // ---------------------------------------------------------------------------------------
 
-    private int TargetInRange()                                         // ------------------------ TODO: Actual implementation vs player scenarios
+    /// <summary>
+    ///     Utilization of hex mathematics to deduce general direction towards a certain tile
+    /// </summary>
+    /// <returns>
+    ///     A suboptimal movement dir towards closest target
+    /// </returns>
+    private int ChaseDir()                                            // ---------------------- TODO: Implemetation for several objective scenarios
     {
-        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
+        List<GameCharacter> detectedEnemies = ObjectivesInSightSensor();
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
 
-        return -1;
+        //  TODO: Which is my most desirable prey?
+        int dir = HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition);
+
+        return dir;
     }
 
-    private int RunnawayDir()                                            // ---------------------- TODO: Implemetation for several predator scenarios
+    /// <summary>
+    /// Checks one tile ahead in every direction in search for enemies
+    /// </summary>
+    /// <returns> Direction the enemy is in [0, 5]. If none were found, returns -1.</returns>
+    private int TargetInRange()
     {
-        List<GameCharacter> detectedEnemies = PredatorsInSightSensor();
-        HexTile currentTile = BattleMap.Instance.mapTiles[InGamePosition];
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
         HexTile neighbor;
 
-        //
-        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition));
-
-        // Check directions available
-        for (int i = 0; i < oppositedir.Count; i++)
+        for (int i = 0; i < 6; i++)
         {
-            if (currentTile.Neighbors.TryGetValue(oppositedir[i], out neighbor))
-                if (!neighbor.Occupied)
-                    return oppositedir[i];          // return most optimal escape route (if possible)
+            // if tile is occupied by an enemy or prey
+            if (currentTile.Neighbors.TryGetValue(i, out neighbor))
+            {
+
+                if (OccupierInTargetList(neighbor))            // => Extract method (generalization)
+                {
+                    return i;
+                }
+            }
         }
 
-        // If all are occupied, "failed escape"
         return -1;
     }
 
@@ -181,12 +199,11 @@ public class RedNosedHare : Leporidae, IGameChar
 
     void Attack(int dir)
     {
-        Debug.Log(Name + "Attacked " + dir + "!");
-
-        GameCharacter target = BattleMap.Instance.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+        // Calculate damage on target
+        GameCharacter target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
         float damageApplied;
 
-        if (target != null && UnitInTargetList(target))
+        if (target != null)
         {
             damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
             //Debug.Log(Name + " did " + damageApplied + "damage!");
@@ -210,13 +227,13 @@ public class RedNosedHare : Leporidae, IGameChar
         HexTile destinationTile;
         Vector2Int destination;
 
-        if (BattleMap.Instance.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
+        if (BattleMap_.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
         {
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
                 gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
-                BattleMap.Instance.mapTiles[InGamePosition].EmptyTile();
+                BattleMap_.mapTiles[InGamePosition].EmptyTile();
 
                 InGamePosition = destination;
                 destinationTile.Occupier = this;
@@ -227,14 +244,15 @@ public class RedNosedHare : Leporidae, IGameChar
         }
         else
         {
-            // Debug.Log(Name + " could NOT move!");
+            Debug.Log(Name + " could NOT move!");
+
             AddReward(-1f);
         }
     }
 
     void Defend(int dir)
     {
-        Debug.Log(Name + " defended!");
+        //Debug.Log(Name + " defended!");
     }
 
     // ---------------------------------------------------------------------------------------
@@ -254,7 +272,7 @@ public class RedNosedHare : Leporidae, IGameChar
 
         if (GetStatValueByName("HP") < 0)
         {
-            Caroussel.Instance.actionInfo.WhoDied_.Add(ID);
+            Caroussel_.actionInfo.WhoDied_.Add(ID);
         }
     }
 

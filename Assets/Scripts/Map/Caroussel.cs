@@ -5,15 +5,15 @@ using UnityEngine;
 
 public class Caroussel : MonoBehaviour
 {
-    public static Caroussel Instance { get; private set; }
-
-    public GameObject entryPrefab;
+    [SerializeField] private GameObject entryPrefab;
+    [SerializeField] private BattleMap battleMap;
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS MEMBERS                                     */
     // ---------------------------------------------------------------------------------------
 
     private const int PRE_CALCULATED_TURNS = 16;
+    private Dictionary<int, Vector3Int> preCalcValues = new Dictionary<int, Vector3Int>();        // Index (battleUnits_) : [CV , lastSkillRank, hasteStatus (counter)]
 
     private Queue<int> turnQueue = new Queue<int>();
     private Queue<ICarousselEntry> entries_ = new Queue<ICarousselEntry>();
@@ -21,40 +21,35 @@ public class Caroussel : MonoBehaviour
     // Key: Name of the enemy | Pair: number of enemies of said species in battle   (?)
     private Dictionary<string, int> enemyNames = new Dictionary<string, int>();
 
+
     public ActionInfo actionInfo = new ActionInfo();
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
     // ---------------------------------------------------------------------------------------
 
-    void Awake()
-    {
-        // Singleton pattern implementation: no more than a single instance of Caroussel on scene
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
     /// <summary>
-    /// Calculate ICV of each battleUnit. Method meant to be called from the BattleMap
+    /// Calculate ICV of each battleUnit. Method meant to be called from the BattleMap at the start of each episode
     /// </summary>
     /// <param name="battleUnits_"></param>
     public void CalculateICVs()
     {
-        List<GameCharacter> battleUnits = BattleMap.Instance.battleUnits_;
+        List<GameCharacter> battleUnits = battleMap.battleUnits_;
+
+        int cv, tickspeed, lastskillR;
+        float hasteStatus;
+
+        preCalcValues.Clear();
 
         for (int i = 0; i < battleUnits.Count; i++)
         {
-            battleUnits[i].CounterValue = StatCalculator.CalculateCounter(
-                battleUnits[i].TickSpeed,
-                battleUnits[i].LastSkillRank,
-                battleUnits[i].GetStatusEffectByName("HASTE")
-                );
+            tickspeed = battleUnits[i].TickSpeed;
+            lastskillR = battleUnits[i].LastSkillRank;
+            hasteStatus = battleUnits[i].GetStatusEffectByName("HASTE");
+
+            cv = battleUnits[i].CounterValue = StatCalculator.CalculateCounter(tickspeed, lastskillR, hasteStatus);
+
+            preCalcValues.Add(i, new Vector3Int(cv, lastskillR, (int) hasteStatus));
         }
     }
 
@@ -74,13 +69,15 @@ public class Caroussel : MonoBehaviour
         {
             SetNextTurn(GetNextTurnIndex());
             currentlyCaltulatedTurns++;
+
+            // decrease 
         }
 
     }
 
     private int GetNextTurnIndex()
     {
-        List<GameCharacter> battleUnits = BattleMap.Instance.battleUnits_;
+        List<GameCharacter> battleUnits = battleMap.battleUnits_;
         int index = 0;
         bool foundzero = false;
 
@@ -119,17 +116,17 @@ public class Caroussel : MonoBehaviour
         Transform contentPanel = transform.GetChild(0).transform;
         GameObject go = Instantiate(entryPrefab, contentPanel);
 
-        go.GetComponent<ICarousselEntry>().SetTurnOwner(index, BattleMap.Instance.battleUnits_[index].Name);
+        go.GetComponent<ICarousselEntry>().SetTurnOwner(index, battleMap.battleUnits_[index].Name);
 
         entries_.Enqueue(go.GetComponent<ICarousselEntry>());
 
-        BattleMap.Instance.battleUnits_[index].CounterValue = StatCalculator.CalculateCounter(
-                BattleMap.Instance.battleUnits_[index].TickSpeed,
-                BattleMap.Instance.battleUnits_[index].LastSkillRank,
-                BattleMap.Instance.battleUnits_[index].GetStatusEffectByName("HASTE")
+        battleMap.battleUnits_[index].CounterValue = StatCalculator.CalculateCounter(
+                battleMap.battleUnits_[index].TickSpeed,
+                battleMap.battleUnits_[index].LastSkillRank,
+                battleMap.battleUnits_[index].GetStatusEffectByName("HASTE")
                 );
 
-        BattleMap.Instance.battleUnits_[index].LastSkillRank = 3;
+        battleMap.battleUnits_[index].LastSkillRank = 3;
     }
 
     public int NextTurnOwner()
@@ -155,7 +152,7 @@ public class Caroussel : MonoBehaviour
         // else: calculate and assign next turn
         SetNextTurn(GetNextTurnIndex());
 
-        // refresh UI to show changes
+        // UI refreshes on Update
     }
 
     private void ClearPreviousQueue()
