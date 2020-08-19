@@ -20,6 +20,8 @@ public class BattleMap : MonoBehaviour
     /*                                    CLASS MEMBERS                                     */
     // ---------------------------------------------------------------------------------------
 
+    private string spawnMarker = "x";
+    private List<Vector2Int> spawnableTiles = new List<Vector2Int>();
     public Dictionary<Vector2Int, HexTile> mapTiles = new Dictionary<Vector2Int, HexTile>();
     public List<GameCharacter> battleUnits_ = new List<GameCharacter>();
     public Dictionary<string, int> enemyNames = new Dictionary<string, int>();
@@ -36,7 +38,7 @@ public class BattleMap : MonoBehaviour
 
         Initialize().Invoke();
 
-        StartCoroutine(GameLoop());
+        StartCoroutine(TrainingLoop());
     }
 
     Action Initialize()
@@ -63,6 +65,7 @@ public class BattleMap : MonoBehaviour
 
         int maxRow = int.MinValue, maxCol = int.MinValue, minRow = int.MaxValue, minCol = int.MaxValue;
         int row, col;
+        bool isSpawn = false;
 
         Vector2Int position;
         GameObject tile;
@@ -70,6 +73,11 @@ public class BattleMap : MonoBehaviour
         int i = 0;
         while (i < mapData.Length)
         {
+            if(mapData[i].Equals(spawnMarker)) {
+                isSpawn = true;
+                i++;
+            }
+
             row = int.Parse(mapData[i]) + OffsetRow;
             col = int.Parse(mapData[i + 1]) + OffsetCol;
 
@@ -79,12 +87,19 @@ public class BattleMap : MonoBehaviour
             tile.GetComponent<HexTile>().Position = position;
             mapTiles.Add(position, tile.GetComponent<HexTile>());
 
+            // If this is a spawn tile => Add its position into the spawnable tiles list
+            if (isSpawn)
+            {
+                spawnableTiles.Add(position);
+            }
+
             // map limits calculation
             if (maxRow < row) maxRow = row;
             if (maxCol < col) maxCol = col;
             if (minRow > row) minRow = row;
             if (minCol > col) minCol = col;
 
+            isSpawn = false;
             i += 2;
         }
 
@@ -171,26 +186,28 @@ public class BattleMap : MonoBehaviour
          *  - Then distributed one by one into the enemies on a loop
          */
 
-        Vector2Int[] keys = new Vector2Int[] {
-            new Vector2Int(2 + OffsetRow, 3 + OffsetCol) ,
-            new Vector2Int(2 + OffsetRow, 1 + OffsetCol)
-        };                                        // Fixed for testing purposes only!
-
-        if (keys.Length != enemyPrefabs.Count)
+        if (spawnableTiles.Count >= enemyPrefabs.Count)
         {
-            return;     // ¿Repeat the enemy assignation process? 
+            spawnableTiles.AddRange(new Vector2Int[] {
+                new Vector2Int(2 + OffsetRow, 3 + OffsetCol) ,
+                new Vector2Int(2 + OffsetRow, 1 + OffsetCol)
+            });                                         // Fixed for testing purposes only!)
+
+            // TODO: Make a pool that's big enough (dynamically)
         }
 
-        // Place the agents on the battleMap (physically and logically)
-        for (int i = 0; i < keys.Length; i++)
+        // Randomly shuffle the spawnList in-place to give enemies an spawn position
+        Utils.FisherYatesShuffle<Vector2Int>(spawnableTiles);
+
+        for (int i = 0; i < battleUnits_.Count; i++)                                    // Place the agents on the battleMap
         {
             agent = battleUnits_[i];
             go = agent.GameObject();
 
-            agent.InGamePosition = keys[i];
-            go.transform.position = HexCalculator.CharacterPosition(keys[i]);
+            agent.InGamePosition = spawnableTiles[i];
+            go.transform.position = HexCalculator.CharacterPosition(spawnableTiles[i]);
 
-            mapTiles[keys[i]].Occupier = agent;
+            mapTiles[spawnableTiles[i]].Occupier = agent;
         }
     }
 
@@ -201,7 +218,7 @@ public class BattleMap : MonoBehaviour
     }
 
     
-    IEnumerator GameLoop()
+    IEnumerator TrainingLoop()
     {
         bool stopCondition = false;
         bool recalcTurns = false;
@@ -209,8 +226,6 @@ public class BattleMap : MonoBehaviour
 
         while (!stopCondition)
         {
-            //Debug.LogWarning("Turn!");
-
             index = caroussel.NextTurnOwner();
             caroussel.actionInfo.TurnOwner = battleUnits_[index];
 
@@ -283,6 +298,7 @@ public class BattleMap : MonoBehaviour
         }
 
         mapTiles.Clear();
+        spawnableTiles.Clear();
 
         foreach (Transform tr in transform)
         { 
@@ -292,8 +308,6 @@ public class BattleMap : MonoBehaviour
 
     void EpisodeReset()
     {
-        //Debug.LogError("RESET IS CALLED");
-
         for (int i = 0; i < battleUnits_.Count; i++)
         {
             battleUnits_[i].Reset();

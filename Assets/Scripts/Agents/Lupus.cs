@@ -84,6 +84,8 @@ public class Lupus : Canis, IGameChar
         sensor.AddObservation(GetStatValueByName("HP"));
 
         sensor.AddObservation(AdjacencySensor());
+
+        //sensor.AddObservation(ProximitySensor());
     }
 
     public override void Heuristic(float[] action)
@@ -146,7 +148,7 @@ public class Lupus : Canis, IGameChar
         IsActive = false;
         gameObject.SetActive(false);
 
-        Debug.Log(Academy.Instance.EpisodeCount);
+        //Debug.Log(Academy.Instance.EpisodeCount);
         EndEpisode();
     }
 

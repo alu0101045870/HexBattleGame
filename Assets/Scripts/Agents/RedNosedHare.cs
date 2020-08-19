@@ -83,6 +83,8 @@ public class RedNosedHare : Leporidae, IGameChar
         sensor.AddObservation(GetStatValueByName("HP"));
 
         sensor.AddObservation(AdjacencySensor());
+
+        //sensor.AddObservation(ProximitySensor());
     }
 
     public override void Heuristic(float[] action)
@@ -147,7 +149,7 @@ public class RedNosedHare : Leporidae, IGameChar
         IsActive = false;
         gameObject.SetActive(false);
 
-        Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
+        //Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
         EndEpisode();
     }
 

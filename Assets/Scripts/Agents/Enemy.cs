@@ -116,6 +116,14 @@ public abstract class Enemy : GameCharacter
         return adjacencySensor;
     }
 
+    public List<float> ProximitySensor()
+    {
+        List<float> proximitySensor = new List<float>();
+
+        return proximitySensor;
+    }
+
+
     public List<GameCharacter> PredatorsInSightSensor()                // ------------------------ TODO: Sight perception sensor implementation
     {
         List<GameCharacter> predators = new List<GameCharacter>();
