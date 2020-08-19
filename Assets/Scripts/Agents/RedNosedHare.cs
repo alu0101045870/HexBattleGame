@@ -74,6 +74,7 @@ public class RedNosedHare : Leporidae, IGameChar
         if (StatusEffects.Count == 0 && StatValues.Count == 0)
         {
             InitAgent();
+            Debug.Log(Academy.Instance.EpisodeCount);
         }
     }
 

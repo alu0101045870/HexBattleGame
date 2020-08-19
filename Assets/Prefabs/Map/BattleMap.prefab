@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &8229665072540733328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2307638402899751168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f9d003c6830a1d459ece0602e9a475a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  entryPrefab: {fileID: 6833678124844754159, guid: 0d0e88fb19ff8464082e8fdd644f4fa1,
+    type: 3}
+  battleMap: {fileID: 8229665072140108253}
 --- !u!1 &8229665071536052490
 GameObject:
   m_ObjectHideFlags: 0
@@ -231,21 +246,6 @@ MonoBehaviour:
   OffsetCol: 0
   OffsetRow: 0
   battleUnits_: []
---- !u!114 &8229665072540733328
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2307638402899751168}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f9d003c6830a1d459ece0602e9a475a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  entryPrefab: {fileID: 6833678124844754159, guid: 0d0e88fb19ff8464082e8fdd644f4fa1,
-    type: 3}
-  battleMap: {fileID: 8229665072140108253}
 --- !u!1 &8229665072803646016
 GameObject:
   m_ObjectHideFlags: 0
@@ -356,9 +356,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8229665072830936430}
   - component: {fileID: 8229665072830936425}
-  - component: {fileID: 8229665072830936424}
+  - component: {fileID: 8955768813594043615}
   m_Layer: 0
-  m_Name: Main Camera
+  m_Name: Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -421,14 +421,14 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &8229665072830936424
+--- !u!81 &8955768813594043615
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8229665072830936427}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!1001 &8229665070988503696
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -436,6 +436,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 8229665072803646020}
     m_Modifications:
+    - target: {fileID: 5923293581304996563, guid: 9ad96c7fb6e67ce4398fab631e845ced,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5923293581511367568, guid: 9ad96c7fb6e67ce4398fab631e845ced,
         type: 3}
       propertyPath: m_Name

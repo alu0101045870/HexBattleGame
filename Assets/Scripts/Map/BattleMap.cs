@@ -28,8 +28,10 @@ public class BattleMap : MonoBehaviour
     /*                                    CLASS METHODS                                     */
     // ---------------------------------------------------------------------------------------
 
-    void Start()
+    public void StartMap()
     {
+        Academy.Instance.OnEnvironmentReset += Initialize();
+
         InstantiateAgents();
 
         Initialize().Invoke();
@@ -68,8 +70,8 @@ public class BattleMap : MonoBehaviour
         int i = 0;
         while (i < mapData.Length)
         {
-            row = int.Parse(mapData[i]);
-            col = int.Parse(mapData[i + 1]);
+            row = int.Parse(mapData[i]) + OffsetRow;
+            col = int.Parse(mapData[i + 1]) + OffsetCol;
 
             position = new Vector2Int(row, col);
             tile = Instantiate(hexTilePrefab, HexCalculator.Position(position.y, position.x), Quaternion.identity, this.transform);
@@ -170,8 +172,8 @@ public class BattleMap : MonoBehaviour
          */
 
         Vector2Int[] keys = new Vector2Int[] {
-            new Vector2Int(2, 3) ,
-            new Vector2Int(2, 1)
+            new Vector2Int(2 + OffsetRow, 3 + OffsetCol) ,
+            new Vector2Int(2 + OffsetRow, 1 + OffsetCol)
         };                                        // Fixed for testing purposes only!
 
         if (keys.Length != enemyPrefabs.Count)
@@ -282,9 +284,9 @@ public class BattleMap : MonoBehaviour
 
         mapTiles.Clear();
 
-        foreach (GameObject go in GameObject.FindGameObjectsWithTag("Obstacle"))
-        {
-            Destroy(go);
+        foreach (Transform tr in transform)
+        { 
+            if (tr.CompareTag("Obstacle")) Destroy(tr.gameObject);
         }
     }
 
@@ -297,6 +299,6 @@ public class BattleMap : MonoBehaviour
             battleUnits_[i].Reset();
         }
 
-        Initialize().Invoke();
+        Academy.Instance.EnvironmentReset();
     }
 }

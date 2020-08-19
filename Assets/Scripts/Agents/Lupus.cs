@@ -73,7 +73,10 @@ public class Lupus : Canis, IGameChar
         base.OnEpisodeBegin();
 
         if (StatusEffects.Count == 0 && StatValues.Count == 0)
+        {
             InitAgent();
+            Debug.Log(Academy.Instance.EpisodeCount);
+        }
     }
 
     public override void CollectObservations(VectorSensor sensor)
