@@ -74,7 +74,88 @@ public abstract class Enemy : GameCharacter
     /*                                    SENSOR METHODS                                    */
     // ---------------------------------------------------------------------------------------
 
-    public List<float> AdjacencySensor()
+    /// <summary>
+    /// Checks one tile ahead in every direction in search for enemies
+    /// </summary>
+    /// <returns> Direction the enemy is in [0, 5]. If none were found, returns -1.</returns>
+    protected int TargetInRange()
+    {
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
+        HexTile neighbor;
+
+        for (int i = 0; i < 6; i++)
+        {
+            // if tile is occupied by an enemy or prey
+            if (currentTile.Neighbors.TryGetValue(i, out neighbor))
+            {
+                if (OccupierInTargetList(neighbor))
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    ///     Utilization of hex mathematics to deduce general direction towards a certain tile
+    /// </summary>
+    /// <returns>
+    ///     A suboptimal movement dir towards closest target
+    /// </returns>
+    protected int ChaseDir()
+    {
+        List<GameCharacter> detectedEnemies = ObjectivesInSightSensor();
+
+        // Choose most desirable prey: proximity criteria
+        if (detectedEnemies.Count <= 0)
+            return -1;
+
+        Vector2Int preyPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
+        HexTile neighbor;
+
+        List<int> dirList = HexCalculator.ForwardDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, preyPosition));
+
+        for (int i = 0; i < dirList.Count; i++)
+        {
+            if (currentTile.Neighbors.TryGetValue(dirList[i], out neighbor))
+                if (!neighbor.Occupied)
+                    return dirList[i];
+        }
+
+        // If all are occupied, "failed chasing"
+        return -1;
+    }
+
+    protected int RunnawayDir()
+    {
+        List<GameCharacter> detectedEnemies = PredatorsInSightSensor(); //
+
+        // Choose most inminent predator: proximity criteria
+        if (detectedEnemies.Count <= 0)
+            return -1;
+
+        Vector2Int predPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
+        HexTile neighbor;
+
+        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, predPosition));    //
+
+        // Check directions available
+        for (int i = 0; i < oppositedir.Count; i++)
+        {
+            if (currentTile.Neighbors.TryGetValue(oppositedir[i], out neighbor))
+                if (!neighbor.Occupied)
+                    return oppositedir[i];          // return most optimal escape route (if possible)
+        }
+
+        // If all are occupied, "failed escape"
+        return -1;
+    }
+
+    protected List<float> AdjacencySensor()
     {
         List<float> adjacencySensor = new List<float>();
 
@@ -116,15 +197,30 @@ public abstract class Enemy : GameCharacter
         return adjacencySensor;
     }
 
-    public List<float> ProximitySensor()
+    protected List<float> ProximitySensor()
     {
-        List<float> proximitySensor = new List<float>();
+        List<float> proximitySensor = new List<float>(new float[]{ 0f, 0f, 0f, 0f, 0f, 0f});
+        List<GameCharacter> detectedObjectives = ObjectivesInSightSensor();
+        List<GameCharacter> detectedPredators = PredatorsInSightSensor();
+        int dir;
+
+        for (int i = 0; i < detectedObjectives.Count; i++)
+        {
+            dir = HexCalculator.GeneralDirectionTowards(InGamePosition, detectedObjectives[i].InGamePosition);
+            proximitySensor[dir] += 1f;
+        }
+
+        for (int i = 0; i < detectedPredators.Count; i++)
+        {
+            dir = HexCalculator.GeneralDirectionTowards(InGamePosition, detectedPredators[i].InGamePosition);
+            proximitySensor[dir] -= 1f;
+        }
 
         return proximitySensor;
     }
 
 
-    public List<GameCharacter> PredatorsInSightSensor()                // ------------------------ TODO: Sight perception sensor implementation
+    protected List<GameCharacter> PredatorsInSightSensor()                // ------------------------ TODO: Sight perception sensor implementation
     {
         List<GameCharacter> predators = new List<GameCharacter>();
 
@@ -139,7 +235,7 @@ public abstract class Enemy : GameCharacter
         return predators;
     }
 
-    public List<GameCharacter> ObjectivesInSightSensor()              // ------------------------ TODO: Sight perception sensor implementation
+    protected List<GameCharacter> ObjectivesInSightSensor()              // ------------------------ TODO: Sight perception sensor implementation
     {
         List<GameCharacter> objectives = new List<GameCharacter>();
 

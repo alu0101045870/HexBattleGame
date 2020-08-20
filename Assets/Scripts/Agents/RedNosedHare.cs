@@ -71,7 +71,7 @@ public class RedNosedHare : Leporidae, IGameChar
 
         sensor.AddObservation(AdjacencySensor());
 
-        //sensor.AddObservation(ProximitySensor());
+        sensor.AddObservation(ProximitySensor());
     }
 
     public override void Heuristic(float[] action)
@@ -138,43 +138,6 @@ public class RedNosedHare : Leporidae, IGameChar
 
         //Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
         EndEpisode();
-    }
-
-    // ---------------------------------------------------------------------------------------
-    /*                                  AGENT SENSOR METHODS                                */
-    // ---------------------------------------------------------------------------------------
-
-    private int TargetInRange()                                         // ------------------------ TODO: Actual implementation vs player scenarios
-    {
-        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
-
-        return -1;
-    }
-
-    private int RunnawayDir()                                            
-    {
-        List<GameCharacter> detectedEnemies = PredatorsInSightSensor();
-
-        // Choose most inminent predator: proximity criteria
-        if (detectedEnemies.Count <= 0)
-            return -1;
-
-        Vector2Int predPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
-        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
-        HexTile neighbor;
-
-        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, predPosition));
-
-        // Check directions available
-        for (int i = 0; i < oppositedir.Count; i++)
-        {
-            if (currentTile.Neighbors.TryGetValue(oppositedir[i], out neighbor))
-                if (!neighbor.Occupied)
-                    return oppositedir[i];          // return most optimal escape route (if possible)
-        }
-
-        // If all are occupied, "failed escape"
-        return -1;
     }
 
     // ---------------------------------------------------------------------------------------
