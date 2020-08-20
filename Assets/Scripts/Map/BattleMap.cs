@@ -269,16 +269,9 @@ public class BattleMap : MonoBehaviour
 
     bool CheckDeaths()
     {
-        // Remove dead unit(s) from caroussel and game on the process
         if (caroussel.actionInfo.WhoDied_.Count > 0)
         {
-            for (int i = 0; i < caroussel.actionInfo.WhoDied_.Count; i++)
-            {
-                battleUnits_[caroussel.actionInfo.WhoDied_[i]].Die();
-            }
-
             caroussel.actionInfo.WhoDied_.Clear();
-
             return true;
         }
 

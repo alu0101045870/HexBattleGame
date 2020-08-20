@@ -261,6 +261,8 @@ public class RedNosedHare : Leporidae, IGameChar
 
     public override void Die()
     {
+        Caroussel_.actionInfo.WhoDied_.Add(ID);
+
         IsActive = false;
         gameObject.SetActive(false);
         SetReward(-5f);
