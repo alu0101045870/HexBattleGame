@@ -32,6 +32,7 @@ public class BattleMap : MonoBehaviour
 
     public void StartMap()
     {
+        Academy.Instance.AutomaticSteppingEnabled = false;
         Academy.Instance.OnEnvironmentReset += Initialize();
 
         InstantiateAgents();
@@ -232,11 +233,10 @@ public class BattleMap : MonoBehaviour
             for (int j = 0; j < battleUnits_[index].GetStatValueByName("ACT"); j++)
             {
                 battleUnits_[index].RequestAct();
+                Academy.Instance.EnvironmentStep();
 
                 yield return new WaitUntil(() => battleUnits_[index].ActionOver);
                 yield return new WaitForSeconds(1f);
-
-                battleUnits_[index].ActionOver = false;
 
                 if (CheckDeaths())
                 {

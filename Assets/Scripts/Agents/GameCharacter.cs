@@ -71,7 +71,10 @@ public abstract class GameCharacter : Agent
     }
     public virtual string Name { 
         get => name_;
-        set => name_ = value;
+        set {
+            name_ = value;
+            gameObject.name = value;
+        }
     }
     public virtual int ID { 
         get => id_; 
@@ -116,7 +119,10 @@ public abstract class GameCharacter : Agent
     public BattleMap BattleMap_ { get => battleMap; set => battleMap = value; }
     public Caroussel Caroussel_ { get => caroussel; set => caroussel = value; }
 
-    public abstract GameObject GameObject();
+    public virtual GameObject GameObject()
+    {
+        return gameObject;
+    }
 
     // ---------------------------------------------------------------------------------------
     /*                                    STATS/STATUS                                      */

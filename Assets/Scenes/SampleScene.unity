@@ -287,7 +287,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 754211420}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 2078331548}
+  m_Script: {fileID: 0}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!4 &754211422
@@ -370,17 +370,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!115 &2078331548
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 5
-  m_Script: 
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_ExecutionOrder: 0
-  m_ClassName: AcademyFixedUpdateStepper
-  m_Namespace: Unity.MLAgents

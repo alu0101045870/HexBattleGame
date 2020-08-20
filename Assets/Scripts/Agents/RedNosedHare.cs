@@ -36,33 +36,20 @@ public class RedNosedHare : Leporidae, IGameChar
         SetStatusEffects(1, 1, 1, 1, 1, 1);
     }
 
-    public override string Name
-    {
-        get => base.Name;
-        set
-        {
-            base.Name = value;
-            gameObject.name = value;
-        }
-    }
-
-    public override GameObject GameObject()
-    {
-        return gameObject;
-    }
-
     // ---------------------------------------------------------------------------------------
     /*                              AGENT ACTIONS IMPLEMENTATION                            */
     // ---------------------------------------------------------------------------------------
 
     public override void RequestAct()
     {
+        ActionOver = false;
         RequestDecision();
     }
 
     public override void Initialize()
     {
         gameObject.tag = "Enemy";
+        ActionOver = false;
 
         InitAgent();
     }
@@ -225,7 +212,11 @@ public class RedNosedHare : Leporidae, IGameChar
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
-                gameObject.GetComponent<Rigidbody>().MovePosition(HexCalculator.CharacterPosition(destination));
+
+                Vector3 igPosition = HexCalculator.CharacterPosition(destination);
+                gameObject.GetComponent<Rigidbody>().position = igPosition;
+                gameObject.transform.position = igPosition;
+               
                 BattleMap_.mapTiles[InGamePosition].EmptyTile();
 
                 InGamePosition = destination;
@@ -262,7 +253,7 @@ public class RedNosedHare : Leporidae, IGameChar
         // Update calling target's healthbar delegate
         OnHealthChanged(percentageLeft);
 
-        if (GetStatValueByName("HP") < 0)
+        if (GetStatValueByName("HP") <= 0)
         {
             Caroussel_.actionInfo.WhoDied_.Add(ID);
         }
