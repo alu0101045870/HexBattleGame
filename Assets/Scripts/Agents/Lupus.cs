@@ -149,15 +149,29 @@ public class Lupus : Canis, IGameChar
     /// <returns>
     ///     A suboptimal movement dir towards closest target
     /// </returns>
-    private int ChaseDir()                                            // ---------------------- TODO: Implemetation for several objective scenarios
+    private int ChaseDir()                                            
     {
         List<GameCharacter> detectedEnemies = ObjectivesInSightSensor();
+
+        // Choose most desirable prey: proximity criteria
+        if (detectedEnemies.Count <= 0)
+            return -1;
+
+        Vector2Int preyPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
         HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
+        HexTile neighbor;
 
-        //  TODO: Which is my most desirable prey?
-        int dir = HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition);
+        List<int> dirList = HexCalculator.ForwardDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, preyPosition));
 
-        return dir;
+        for (int i = 0; i < dirList.Count; i++)
+        {
+            if (currentTile.Neighbors.TryGetValue(dirList[i], out neighbor))
+                if (!neighbor.Occupied)
+                    return dirList[i];
+        }
+
+        // If all are occupied, "failed chasing"
+        return -1;
     }
 
     /// <summary>
@@ -174,7 +188,6 @@ public class Lupus : Canis, IGameChar
             // if tile is occupied by an enemy or prey
             if (currentTile.Neighbors.TryGetValue(i, out neighbor))
             {
-
                 if (OccupierInTargetList(neighbor))            // => Extract method (generalization)
                 {
                     return i;

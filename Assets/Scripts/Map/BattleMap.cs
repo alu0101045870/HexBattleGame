@@ -198,7 +198,7 @@ public class BattleMap : MonoBehaviour
         }
 
         // Randomly shuffle the spawnList in-place to give enemies an spawn position
-        Utils.FisherYatesShuffle<Vector2Int>(spawnableTiles);
+        Utils.FisherYatesShuffle<Vector2Int>(ref spawnableTiles);
 
         for (int i = 0; i < battleUnits_.Count; i++)                                    // Place the agents on the battleMap
         {

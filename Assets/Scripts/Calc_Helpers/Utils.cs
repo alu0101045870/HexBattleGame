@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class Utils 
 {
-    public static void FisherYatesShuffle<T>(this IList<T> list)
+    public static void FisherYatesShuffle<T>(ref List<T> list)
     { 
         int n = list.Count;
         while (n > 1)

@@ -232,6 +232,38 @@ public static class HexCalculator
         return generalDir;
     }
 
+    public static List<int> ForwardDir(int dir)
+    {
+        List<int> chasedir = new List<int>();
+
+        switch (dir)
+        {
+            case 0:
+                chasedir.AddRange(new int[] { 0, 1, 3 });
+                break;
+            case 1:
+                chasedir.AddRange(new int[] { 1, 0, 2 });
+                break;
+            case 2:
+                chasedir.AddRange(new int[] { 2, 1, 5 });
+                break;
+            case 3:
+                chasedir.AddRange(new int[] { 3, 4, 0 });
+                break;
+            case 4:
+                chasedir.AddRange(new int[] { 4, 5, 3 });
+                break;
+            case 5:
+                chasedir.AddRange(new int[] { 5, 4, 2 });
+                break;
+            default:
+                chasedir.Add(Random.Range(0, 5));
+                break;
+        }
+
+        return chasedir;
+    }
+
     public static List<int> OppositeDir(int dir)
     {
         List<int> oppositedir = new List<int>();
@@ -296,14 +328,32 @@ function oddq_to_cube(hex):
 
     // --------------------------------- DISTANCE METHODS ----------------------------------------
 
+    public static Vector2Int ClosestPosition(Vector2Int origin, List<GameCharacter> detectedEnemies)
+    {
+        if (detectedEnemies.Count == 1)
+            return detectedEnemies[0].InGamePosition;
+
+        int index = 0;
+        int minDistance = OffsetDistance(origin, detectedEnemies[index].InGamePosition);
+        int distance;
+
+        for (int i = 1; i < detectedEnemies.Count; i++)
+        {
+            distance = OffsetDistance(origin, detectedEnemies[i].InGamePosition);
+
+            if (minDistance > distance)
+                minDistance = distance;
+        }
+
+        return detectedEnemies[index].InGamePosition;
+    }
+
     public static int CubeDistance (Vector3Int cubeCoords1, Vector3Int cubeCoords2)
     {
-        return (
-            Mathf.Abs(cubeCoords1.x - cubeCoords2.x) 
-            + Mathf.Abs(cubeCoords1.y - cubeCoords2.y) 
-            + Mathf.Abs(cubeCoords1.z - cubeCoords2.z)
-            ) 
-            / 2;
+        return ( Mathf.Abs(cubeCoords1.x - cubeCoords2.x) 
+                + Mathf.Abs(cubeCoords1.y - cubeCoords2.y) 
+                + Mathf.Abs(cubeCoords1.z - cubeCoords2.z)) 
+                / 2;
     }
 
     public static int OffsetDistance (Vector2Int offsetCoords1, Vector2Int offsetCoords2)

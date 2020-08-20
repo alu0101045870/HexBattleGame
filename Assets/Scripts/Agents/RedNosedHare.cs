@@ -151,14 +151,19 @@ public class RedNosedHare : Leporidae, IGameChar
         return -1;
     }
 
-    private int RunnawayDir()                                            // ---------------------- TODO: Implemetation for several predator scenarios
+    private int RunnawayDir()                                            
     {
         List<GameCharacter> detectedEnemies = PredatorsInSightSensor();
+
+        // Choose most inminent predator: proximity criteria
+        if (detectedEnemies.Count <= 0)
+            return -1;
+
+        Vector2Int predPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
         HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
         HexTile neighbor;
 
-        //
-        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, detectedEnemies[0].InGamePosition));
+        List<int> oppositedir = HexCalculator.OppositeDir(HexCalculator.GeneralDirectionTowards(this.InGamePosition, predPosition));
 
         // Check directions available
         for (int i = 0; i < oppositedir.Count; i++)
