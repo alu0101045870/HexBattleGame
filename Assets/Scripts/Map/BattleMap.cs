@@ -62,7 +62,8 @@ public class BattleMap : MonoBehaviour
     /// </summary>
     void InitializeMap()
     {
-        string[] mapData = mapFiles[UnityEngine.Random.Range(0, mapFiles.Count)].text.Split(' ', '\n');
+        //UnityEngine.Random.Range(0, mapFiles.Count)
+        string[] mapData = mapFiles[4].text.Split(' ', '\n');
 
         int maxRow = int.MinValue, maxCol = int.MinValue, minRow = int.MaxValue, minCol = int.MaxValue;
         int row, col;
@@ -181,24 +182,17 @@ public class BattleMap : MonoBehaviour
             battleUnits_[i].ResetStats();
         }
 
-        /**
-         *  IDEA: Get the enemy spawn pool from mapFile
-         *  - Available positions are randomly shuffled into a Vector2Int queue
-         *  - Then distributed one by one into the enemies on a loop
-         */
-
-        if (spawnableTiles.Count >= enemyPrefabs.Count)
-        {
-            spawnableTiles.AddRange(new Vector2Int[] {
-                new Vector2Int(2 + OffsetRow, 3 + OffsetCol) ,
-                new Vector2Int(2 + OffsetRow, 1 + OffsetCol)
-            });                                         // Fixed for testing purposes only!)
-
-            // TODO: Make a pool that's big enough (dynamically)
-        }
-
-        // Randomly shuffle the spawnList in-place to give enemies an spawn position
+        // Randomly shuffle the spawnList in-place to give enemies a spawn position
         Utils.FisherYatesShuffle<Vector2Int>(ref spawnableTiles);
+
+        //Debug
+        string debug = "";
+        for (int i = 0; i < spawnableTiles.Count; i++)
+        {
+            debug += spawnableTiles[i].ToString() + " | ";
+        }
+        Debug.Log("After: " + debug);
+        //Debug
 
         for (int i = 0; i < battleUnits_.Count; i++)                                    // Place the agents on the battleMap
         {

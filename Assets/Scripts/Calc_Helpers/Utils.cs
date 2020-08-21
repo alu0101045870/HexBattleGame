@@ -11,11 +11,18 @@ public static class Utils
         {
             n--;
             int k = Random.Range(0, n + 1);
-            Swap<T>(list[k], list[n]);
+            Swap<T>(k, n, ref list);
         }
     }
 
-    public static void Swap<T>(T a, T b)
+    public static void Swap<T>(int k, int n, ref List<T> list)
+    {
+        T value = list[k];
+        list[k] = list[n];
+        list[n] = value;
+    }
+
+    public static void Swap<T>(T a , T b)
     {
         T value = a;
         a = b;
