@@ -9,7 +9,10 @@ public class BattleMap : MonoBehaviour
     public GameObject hexTilePrefab;
     public GameObject obstaclePrefab;
 
-    [SerializeField] private List<GameObject> enemyPrefabs;
+    //[SerializeField] private List<GameObject> playableCharPrefabs; 
+    [SerializeField] private List<GameObject> enemyFaction_1_Prefabs;
+    [SerializeField] private List<GameObject> enemyFaction_2_Prefabs;
+    //[SerializeField] private List<GameObject> enemyFaction_3_Prefabs;
     [SerializeField] private List<TextAsset> mapFiles;
     [SerializeField] private Caroussel caroussel;
 
@@ -20,11 +23,13 @@ public class BattleMap : MonoBehaviour
     /*                                    CLASS MEMBERS                                     */
     // ---------------------------------------------------------------------------------------
 
-    private string spawnMarker = "x";
+    private const string spawnMarker = "x";
     private List<Vector2Int> spawnableTiles = new List<Vector2Int>();
     public Dictionary<Vector2Int, HexTile> mapTiles = new Dictionary<Vector2Int, HexTile>();
+    
     public List<GameCharacter> battleUnits_ = new List<GameCharacter>();
     public Dictionary<string, int> enemyNames = new Dictionary<string, int>();
+    public List<Dictionary<int, bool>> factions = new List<Dictionary<int, bool>>();
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
@@ -36,6 +41,7 @@ public class BattleMap : MonoBehaviour
         Academy.Instance.OnEnvironmentReset += Initialize();
 
         InstantiateAgents();
+        InstantiatePlayableChars();
 
         Initialize().Invoke();
 
@@ -44,8 +50,6 @@ public class BattleMap : MonoBehaviour
 
     Action Initialize()
     {
-        //Debug.LogError("INITIALIZE WAS CALLED!");
-
         return delegate ()
         {
             CleanUpBattleMap();
@@ -123,29 +127,39 @@ public class BattleMap : MonoBehaviour
         HexCalculator.SetNeighborsInMap(mapTiles);
     }
 
+    void InstantiatePlayableChars()
+    {
+        // Retrieve serialized team data
+
+        // Instantiate from list of prefabs
+    }
+
     void InstantiateAgents()
     {
+        // InstantiateFaction(playerPrefabs)
 
-        // In a real game scenario, number and variety of enemies would be decided 
-        // randomly from the prefab list
+        InstantiateFaction(enemyFaction_1_Prefabs, new int[] { 1 });
+        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 1 });
+        //InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
+    }
 
-        // However, for demo purposes, it is decided beforehand in this stage
-
-        int[] NUM_AGENTS = new int[] { 1, 1 };
-
+    void InstantiateFaction(List<GameObject> factionPrefabs, int[] NUM_AGENTS)
+    {
         GameObject go;
         GameCharacter agent;
 
-        if (NUM_AGENTS.Length != enemyPrefabs.Count)
+        if (NUM_AGENTS.Length != factionPrefabs.Count)
         {
             return;     // ¿Repeat the enemy assignation process? 
         }
+
+        factions.Add(new Dictionary<int, bool>());
 
         for (int i = 0; i < NUM_AGENTS.Length; i++)
         {
             for (int spawn = 0; spawn < NUM_AGENTS[i]; spawn++)
             {
-                go = Instantiate(enemyPrefabs[i]);
+                go = Instantiate(factionPrefabs[i]);
                 agent = go.GetComponent<GameCharacter>();
 
                 if (!enemyNames.ContainsKey(agent.Name))
@@ -161,12 +175,14 @@ public class BattleMap : MonoBehaviour
 
                 battleUnits_.Add(agent);
                 agent.ID = battleUnits_.Count - 1;
-                
+                agent.FactionID = factions.Count - 1;
+
                 agent.BattleMap_ = this;
                 agent.Caroussel_ = this.caroussel;
+
+                factions[factions.Count - 1].Add(agent.ID, true);
             }
         }
-
     }
 
     void InitializeAgents()
@@ -184,15 +200,6 @@ public class BattleMap : MonoBehaviour
 
         // Randomly shuffle the spawnList in-place to give enemies a spawn position
         Utils.FisherYatesShuffle<Vector2Int>(ref spawnableTiles);
-
-        //Debug
-        string debug = "";
-        for (int i = 0; i < spawnableTiles.Count; i++)
-        {
-            debug += spawnableTiles[i].ToString() + " | ";
-        }
-        Debug.Log("After: " + debug);
-        //Debug
 
         for (int i = 0; i < battleUnits_.Count; i++)                                    // Place the agents on the battleMap
         {
@@ -236,7 +243,7 @@ public class BattleMap : MonoBehaviour
                 {
                     recalcTurns = true;
 
-                    // TODO: Implement faction supremacy check
+                    // Battle Over condition: Faction Supremacy
                     if (stopCondition = FactionSupremacy()) break;
                 }
             }
@@ -272,9 +279,38 @@ public class BattleMap : MonoBehaviour
         return false;
     }
 
+    private bool FactionLives(Dictionary<int, bool> faction)
+    {
+        foreach (int key in faction.Keys)
+        {
+            if (faction[key]) return true;
+        }
+
+        return false;
+    }
+
     bool FactionSupremacy()
     {
-        return true;
+        // Players are always the firstly introduced faction 
+        /*  Player heck
+            
+        if (!FactionLives(factions[0])) 
+        {
+            return true;
+        }
+        
+        */
+
+        int livingfactions = 0;
+
+        for (int i = 0; i < factions.Count; i++)                //
+        {
+            if (FactionLives(factions[i])) livingfactions++;
+        }
+
+        Debug.Log(livingfactions);
+
+        return (livingfactions <= 1);
     }
 
     void CleanUpBattleMap()

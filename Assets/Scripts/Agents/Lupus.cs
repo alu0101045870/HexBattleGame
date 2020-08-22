@@ -220,13 +220,14 @@ public class Lupus : Canis, IGameChar
 
         if (GetStatValueByName("HP") <= 0)
         {
-            Caroussel_.actionInfo.WhoDied_.Add(ID);
+            Die();
         }
     }
 
     public override void Die()
     {
         Caroussel_.actionInfo.WhoDied_.Add(ID);
+        BattleMap_.factions[FactionID][ID] = false;
 
         IsActive = false;
         gameObject.SetActive(false);

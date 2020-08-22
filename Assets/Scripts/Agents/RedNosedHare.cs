@@ -223,13 +223,16 @@ public class RedNosedHare : Leporidae, IGameChar
 
         if (GetStatValueByName("HP") <= 0)
         {
-            Caroussel_.actionInfo.WhoDied_.Add(ID);
+            Die();
         }
     }
 
     public override void Die()
     {
         Caroussel_.actionInfo.WhoDied_.Add(ID);
+        BattleMap_.factions[FactionID][ID] = false;
+
+        Debug.Log("Faction: " + FactionID + " | ID: " + ID);
 
         IsActive = false;
         gameObject.SetActive(false);

@@ -47,6 +47,7 @@ public abstract class GameCharacter : Agent
     private string species_ = "";
     private string name_ = "";
     private int id_;
+    private int factionID_;
     private Vector2Int ingame_position_ = new Vector2Int();
 
     private int tickspeed_;
@@ -79,6 +80,11 @@ public abstract class GameCharacter : Agent
     public virtual int ID { 
         get => id_; 
         set => id_ = value; 
+    }
+    public virtual int FactionID
+    {
+        get => factionID_;
+        set => factionID_ = value;
     }
     public virtual int TickSpeed {
         get => tickspeed_; 
