@@ -146,17 +146,24 @@ public class RedNosedHare : Leporidae, IGameChar
 
     void Attack(int dir)
     {
-        Debug.Log(Name + "Attacked " + dir + "!");
-
-        GameCharacter target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+        // Calculate damage on target
+        GameCharacter target;
+        HexTile neighborTile;
         float damageApplied;
 
-        if (target != null && UnitInTargetList(target))
+        if (BattleMap_.mapTiles.TryGetValue(HexCalculator.GetNeighborAtDir(InGamePosition, dir), out neighborTile))
         {
-            damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
-            //Debug.Log(Name + " did " + damageApplied + "damage!");
-            target.ReceiveDamage(damageApplied);
+            target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
 
+            if (target != null)
+            {
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
+                target.ReceiveDamage(damageApplied);
+            }
+            else
+            {
+                AddReward(-1f);
+            }
         }
         else
         {
@@ -231,8 +238,6 @@ public class RedNosedHare : Leporidae, IGameChar
     {
         Caroussel_.actionInfo.WhoDied_.Add(ID);
         BattleMap_.factions[FactionID][ID] = false;
-
-        Debug.Log("Faction: " + FactionID + " | ID: " + ID);
 
         IsActive = false;
         gameObject.SetActive(false);

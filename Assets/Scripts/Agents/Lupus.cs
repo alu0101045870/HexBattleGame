@@ -147,15 +147,23 @@ public class Lupus : Canis, IGameChar
     void Attack(int dir)
     {
         // Calculate damage on target
-        GameCharacter target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+        GameCharacter target;
+        HexTile neighborTile;
         float damageApplied;
 
-        if (target != null)
+        if (BattleMap_.mapTiles.TryGetValue(HexCalculator.GetNeighborAtDir(InGamePosition, dir), out neighborTile))
         {
-            damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
-            //Debug.Log(Name + " did " + damageApplied + "damage!");
-            target.ReceiveDamage(damageApplied);
+            target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
 
+            if (target != null)
+            {
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
+                target.ReceiveDamage(damageApplied);
+            }
+            else
+            {
+                AddReward(-1f);
+            }
         }
         else
         {

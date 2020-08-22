@@ -308,7 +308,7 @@ public class BattleMap : MonoBehaviour
             if (FactionLives(factions[i])) livingfactions++;
         }
 
-        Debug.Log(livingfactions);
+        Debug.Log("Living factions: " + livingfactions);
 
         return (livingfactions <= 1);
     }
