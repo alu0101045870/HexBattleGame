@@ -233,10 +233,12 @@ MonoBehaviour:
     type: 3}
   obstaclePrefab: {fileID: 3366316145108069012, guid: 1e5ea00f36df8e04ca74822a346e26ab,
     type: 3}
+  playableCharPrefabs: []
   enemyFaction_1_Prefabs:
   - {fileID: 2173625818032979713, guid: e036c254e131c284ab010d8c0e1d13e4, type: 3}
   enemyFaction_2_Prefabs:
   - {fileID: 4696203527417669404, guid: a63f4b30f55c1144987e7bdfc4887fa0, type: 3}
+  enemyFaction_3_Prefabs: []
   mapFiles:
   - {fileID: 4900000, guid: 7dd98e15448b98c429a72c07d175e91d, type: 3}
   - {fileID: 4900000, guid: aa5e001c211b5a748b5b00ff50dffd2a, type: 3}
@@ -244,6 +246,11 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 544a5f723a405174b9aee1dcedff7d57, type: 3}
   - {fileID: 4900000, guid: e3623ff5e8f81bd4785c8e7033ab6f8c, type: 3}
   caroussel: {fileID: 8229665072540733328}
+  spawnMarkers:
+  - p
+  - x
+  - y
+  - z
   OffsetCol: 0
   OffsetRow: 0
   battleUnits_: []

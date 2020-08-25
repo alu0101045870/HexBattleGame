@@ -15,6 +15,7 @@ public class BattleMap : MonoBehaviour
     [SerializeField] private List<GameObject> enemyFaction_3_Prefabs;
     [SerializeField] private List<TextAsset> mapFiles;
     [SerializeField] private Caroussel caroussel;
+    [SerializeField] private List<string> spawnMarkers;
 
     public int OffsetCol;
     public int OffsetRow;
@@ -22,13 +23,8 @@ public class BattleMap : MonoBehaviour
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS MEMBERS                                     */
     // ---------------------------------------------------------------------------------------
-
-    // private const string playerMarker = "0";
-    private const string spawnMarker_1 = "x";
-    private const string spawnMarker_2 = "y";
-    // private const string spawnMarker_3 = "z";
-    private List<Vector2Int> spawnableTiles_1 = new List<Vector2Int>();
-    private List<Vector2Int> spawnableTiles_2 = new List<Vector2Int>();
+    
+    private List<List<Vector2Int>> spawnableTiles_ = new List<List<Vector2Int>>();
     public Dictionary<Vector2Int, HexTile> mapTiles = new Dictionary<Vector2Int, HexTile>();
     
     public List<GameCharacter> battleUnits_ = new List<GameCharacter>();
@@ -75,23 +71,26 @@ public class BattleMap : MonoBehaviour
 
         int maxRow = int.MinValue, maxCol = int.MinValue, minRow = int.MaxValue, minCol = int.MaxValue;
         int row, col;
-        bool isSpawn_1 = false, isSpawn_2 = false;
-
+        bool isSpawn = false;
+        int faction = 0;
 
         Vector2Int position;
         GameObject tile;
 
+        for (int j = 0; j < 4; j++) 
+            spawnableTiles_.Add(new List<Vector2Int>());
+
         int i = 0;
         while (i < mapData.Length)
         {
-            if(mapData[i].Equals(spawnMarker_1)) {
-                isSpawn_1 = true;
-                i++;
-            }
-            else if (mapData[i].Equals(spawnMarker_2))
-            {
-                isSpawn_2 = true;
-                i++;
+            for (int j = 0; j < spawnMarkers.Count; j++) { 
+                
+                if (mapData[i].Equals(spawnMarkers[j])) {
+                    isSpawn = true;
+                    faction = j;
+                    i++;
+                    break;
+                }
             }
 
             row = int.Parse(mapData[i]) + OffsetRow;
@@ -104,22 +103,15 @@ public class BattleMap : MonoBehaviour
             mapTiles.Add(position, tile.GetComponent<HexTile>());
 
             // If this is a spawn tile => Add its position into the spawnable tiles list
-            if (isSpawn_1)
-            {
-                spawnableTiles_1.Add(position);
-            }
-            else if(isSpawn_2)
-            {
-                spawnableTiles_2.Add(position);
-            }
-
+            if (isSpawn) spawnableTiles_[faction].Add(position);
+            
             // map limits calculation
             if (maxRow < row) maxRow = row;
             if (maxCol < col) maxCol = col;
             if (minRow > row) minRow = row;
             if (minCol > col) minCol = col;
 
-            isSpawn_1 = false;
+            isSpawn = false;
             i += 2;
         }
 
@@ -204,6 +196,8 @@ public class BattleMap : MonoBehaviour
         GameObject go;
         GameCharacter agent;
         List<Vector2Int> spawntiles;
+        int[] spawnIndex = new int[] { -1, -1, -1, -1 };
+        int factionID;
 
         // Ensure all agents are active
         for (int i = 0; i < battleUnits_.Count; i++)
@@ -214,43 +208,22 @@ public class BattleMap : MonoBehaviour
         }
 
         // Randomly shuffle the spawnList in-place to give enemies a spawn position
-        Utils.FisherYatesShuffle<Vector2Int>(ref spawnableTiles_1);
-        Utils.FisherYatesShuffle<Vector2Int>(ref spawnableTiles_2);
-        int j = -1, k = -1, z = -1,  spawnIndex = 0;
-
-        if (spawnableTiles_1.Count < 1 || spawnableTiles_2.Count < 1)
-            Debug.LogError("spawners empty");
+        for (int i = 0; i < spawnableTiles_.Count; i++)
+            Utils.FisherYatesShuffle<Vector2Int>(spawnableTiles_[i]);
+      
 
         for (int i = 0; i < battleUnits_.Count; i++)                                    // Place the agents on the battleMap
         {
             agent = battleUnits_[i];
             go = agent.GameObject();
 
-            if (agent.FactionID == 1)
-            {
-                spawntiles = spawnableTiles_1;
-                spawnIndex = ++j;
-            }
-            else if (agent.FactionID == 2)
-            {
-                spawntiles = spawnableTiles_2;
-                spawnIndex = ++k;
-            }
-            else if (agent.FactionID == 3)
-            {
-                spawntiles = new List<Vector2Int>();            //
-                spawnIndex = ++z;
-            }
-            else
-            {
-                spawntiles = new List<Vector2Int>();            //      Player faction
-                spawnIndex = 0;
-            }
+            factionID = agent.FactionID;
+            spawntiles = spawnableTiles_[factionID];
 
-            agent.InGamePosition = spawntiles[spawnIndex];
-            go.transform.position = HexCalculator.CharacterPosition(spawntiles[spawnIndex]);
+            agent.InGamePosition = spawntiles[++spawnIndex[factionID]];
+            go.transform.position = HexCalculator.CharacterPosition(spawntiles[spawnIndex[factionID]]);
 
-            mapTiles[spawntiles[spawnIndex]].Occupier = agent;
+            mapTiles[spawntiles[spawnIndex[factionID]]].Occupier = agent;
         }
     }
 
@@ -362,8 +335,9 @@ public class BattleMap : MonoBehaviour
         }
 
         mapTiles.Clear();
-        spawnableTiles_1.Clear();
-        spawnableTiles_2.Clear();
+        
+        for (int i = 0; i < spawnableTiles_.Count; i++)
+            spawnableTiles_[i].Clear();
 
         foreach (Transform tr in transform)
         { 
