@@ -53,8 +53,7 @@ public class RedNosedHare : Leporidae, IGameChar
         base.OnEpisodeBegin();
 
         InitAgent();
-        //Debug.Log(Academy.Instance.EpisodeCount);
-        
+        //Debug.Log(Academy.Instance.EpisodeCount);  
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -96,37 +95,18 @@ public class RedNosedHare : Leporidae, IGameChar
 
     public override void OnActionReceived(float[] vectorAction)
     {
-        // Exec Skill with given direction
-
-        switch ((int)vectorAction[0])
-        {
-            case 0: // Attack
-                {
-                    Attack((int)vectorAction[1]);
-
-                    break;
-                }
-            case 1: // Move
-                {
-                    Move((int)vectorAction[1]);
-                    break;
-                }
-            default:
-                {
-                    Defend((int)vectorAction[1]);
-                    break;
-                }
-        }
+        // Exec chosen Skill with given direction
+        skills_[(int)vectorAction[0]].Invoke((int)vectorAction[1]);
 
         AddReward(-0.01f);
         ActionOver = true;
     }
 
     // ---------------------------------------------------------------------------------------
-    /*                                  AGENT ACTION METHODS                                */
+    /*                                   AGENT UNIQUE SKILLS                                */
     // ---------------------------------------------------------------------------------------
 
-    //
+    // No additional skills
 
     // ---------------------------------------------------------------------------------------
     /*                                 BATTLE LOOP EVENTS                                   */

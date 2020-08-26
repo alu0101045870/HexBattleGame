@@ -325,9 +325,15 @@ public abstract class Enemy : GameCharacter
 
 public abstract class Canis : Enemy
 {
+    protected List<Action<int>> skills_ = new List<Action<int>>();
+
     public Canis() : base(new string[] { "Player", "Leporidae" }, new string[] { "Abomination" })
     {
         Species = "Canis";
+
+        skills_.Add(Attack);        //[0]
+        skills_.Add(Move);          //[1]
+        skills_.Add(Defend);        //[2]
     }
 
     // ---------------------------------------------------------------------------------------
@@ -410,16 +416,22 @@ public abstract class Canis : Enemy
 
 public abstract class Leporidae : Enemy
 {
+    protected List<Action<int>> skills_ = new List<Action<int>>();
+
     public Leporidae() : base(new string[] { "Player" }, new string[] { "Canis" })
     { 
         Species = "Leporidae";
+
+        skills_.Add(Attack);        //[0]
+        skills_.Add(Move);          //[1]
+        skills_.Add(Defend);        //[2]
     }
 
     // ---------------------------------------------------------------------------------------
     /*                                  AGENT ACTION METHODS                                */
     // ---------------------------------------------------------------------------------------
 
-    protected void Attack(int dir)
+    void Attack(int dir)
     {
         // Calculate damage on target
         const int ATTACK_DMG_CONSTANT = 16;
@@ -449,7 +461,7 @@ public abstract class Leporidae : Enemy
         AddReward(-0.5f);
     }
 
-    protected void Move(int dir)
+    void Move(int dir)
     {
         // First, check if movement is possible
         // - Does the destination tile exist?
@@ -481,7 +493,7 @@ public abstract class Leporidae : Enemy
         AddReward(-0.5f);
     }
 
-    protected void Defend(int dir)
+    void Defend(int dir)
     {
         // if (IsAdjacentTo("Leporidae"))
         //      Heal

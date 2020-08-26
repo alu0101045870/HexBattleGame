@@ -96,36 +96,19 @@ public class Lupus : Canis, IGameChar
 
     public override void OnActionReceived(float[] vectorAction)
     {
-        // Exec Skill with given direction
+        // Exec chosen Skill with given direction
+        skills_[(int)vectorAction[0]].Invoke((int)vectorAction[1]);
 
-        switch ((int)vectorAction[0])
-        {
-            case 0: // Attack
-                {
-                    Attack((int)vectorAction[1]);
-                    break;
-                }
-            case 1: // Move
-                {
-                    Move((int)vectorAction[1]);
-                    break;
-                }
-            default:
-                {
-                    Defend((int)vectorAction[1]);
-                    break;
-                }
-        }
 
         AddReward(-0.1f);
         ActionOver = true;
     }
 
     // ---------------------------------------------------------------------------------------
-    /*                                  AGENT ACTION METHODS                                */
+    /*                                   AGENT UNIQUE SKILLS                                */
     // ---------------------------------------------------------------------------------------
 
-    //
+    // No additional skills
 
     // ---------------------------------------------------------------------------------------
     /*                                 BATTLE LOOP EVENTS                                   */
