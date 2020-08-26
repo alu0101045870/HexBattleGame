@@ -30,6 +30,7 @@ public class BattleMap : MonoBehaviour
     public List<GameCharacter> battleUnits_ = new List<GameCharacter>();
     public Dictionary<string, int> enemyNames = new Dictionary<string, int>();
     public List<Dictionary<int, bool>> factions = new List<Dictionary<int, bool>>();
+    private List<int> winnerFactions = new List<int>();
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
@@ -258,7 +259,7 @@ public class BattleMap : MonoBehaviour
                     recalcTurns = true;
 
                     // Battle Over condition: Faction Supremacy
-                    if (stopCondition = FactionSupremacy()) break;
+                    if (stopCondition = FactionSupremacy(out winnerFactions)) break;
                 }
             }
 
@@ -276,6 +277,7 @@ public class BattleMap : MonoBehaviour
             else
             {
                 stopCondition = false;
+                RewardWinners(winnerFactions);
                 EpisodeReset();
             }
         }
@@ -303,28 +305,40 @@ public class BattleMap : MonoBehaviour
         return false;
     }
 
-    bool FactionSupremacy()
+    bool FactionSupremacy(out List<int> winnerFactions)
     {
         // Players are always the firstly introduced faction 
-        /*  Player heck
+        /*  If the player is dead -> other factions win
             
         if (!FactionLives(factions[0])) 
         {
+            winnerFactions.Add(1);
+            winnerFactions.Add(2);
+            winnerFactions.Add(3);
+
             return true;
         }
         
         */
 
-        int livingfactions = 0;
+        List<int> livingfactions = new List<int>();
+        winnerFactions = new List<int>();
 
         for (int i = 0; i < factions.Count; i++)                //
         {
-            if (FactionLives(factions[i])) livingfactions++;
+            if (FactionLives(factions[i])) 
+                livingfactions.Add(i);
         }
 
         //Debug.Log("Living factions: " + livingfactions);
 
-        return (livingfactions <= 1);
+        if (livingfactions.Count == 1)
+        {
+            winnerFactions.Add(livingfactions[0]);
+            return true;
+        }
+
+        return false;
     }
 
     void CleanUpBattleMap()
@@ -335,7 +349,8 @@ public class BattleMap : MonoBehaviour
         }
 
         mapTiles.Clear();
-        
+        winnerFactions.Clear();
+
         for (int i = 0; i < spawnableTiles_.Count; i++)
             spawnableTiles_[i].Clear();
 
@@ -353,5 +368,15 @@ public class BattleMap : MonoBehaviour
         }
 
         Academy.Instance.EnvironmentReset();
+    }
+
+    void RewardWinners(List<int> winnerFactionID)
+    {
+        for (int i = 0; i < battleUnits_.Count; i++)
+        {
+            for(int j = 0; j < winnerFactionID.Count; j++)
+                if (battleUnits_[i].FactionID.Equals(winnerFactions[j]))
+                    battleUnits_[i].Win();
+        }
     }
 }

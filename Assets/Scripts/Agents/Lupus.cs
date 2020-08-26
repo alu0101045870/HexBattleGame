@@ -17,13 +17,7 @@ public class Lupus : Canis, IGameChar
 
     private void InitAgent()
     {
-        InitStatValues();                               // Stat initialization
-        InitStatusEffects();
         SetParameters();
-
-        // TickSpeed & LastSkillRank (default 3)
-        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
-        LastSkillRank = 3;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -32,9 +26,15 @@ public class Lupus : Canis, IGameChar
 
     public override void SetParameters()
     {
-        //
-        SetStatValues(74, 7, 1, 1, 1, 2, 2, 59, 0);
+        InitStatValues();                               // Stat initialization
+        InitStatusEffects();
+
+        SetStatValues(78, 7, 1, 21, 1, 2, 1, 59, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
+
+        // TickSpeed & LastSkillRank (default 3)
+        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
+        LastSkillRank = 3;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -59,11 +59,9 @@ public class Lupus : Canis, IGameChar
     {
         base.OnEpisodeBegin();
 
-        if (StatusEffects.Count == 0 && StatValues.Count == 0)
-        {
-            InitAgent();
-            Debug.Log(Academy.Instance.EpisodeCount);
-        }
+        InitAgent();
+        //Debug.Log(Academy.Instance.EpisodeCount);
+        
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -73,6 +71,8 @@ public class Lupus : Canis, IGameChar
         sensor.AddObservation(AdjacencySensor());
 
         sensor.AddObservation(ProximitySensor());
+
+        sensor.AddObservation(DistanceTowardsClosestTarget());
     }
 
     public override void Heuristic(float[] action)
@@ -127,6 +127,7 @@ public class Lupus : Canis, IGameChar
                 }
         }
 
+        AddReward(-0.1f);
         ActionOver = true;
     }
 
@@ -138,7 +139,7 @@ public class Lupus : Canis, IGameChar
         //Debug.Log(Academy.Instance.EpisodeCount);
         EndEpisode();
     }
-    
+
 
     // ---------------------------------------------------------------------------------------
     /*                                  AGENT ACTION METHODS                                */
@@ -147,6 +148,7 @@ public class Lupus : Canis, IGameChar
     void Attack(int dir)
     {
         // Calculate damage on target
+        const int ATTACK_DMG_CONSTANT = 16;
         GameCharacter target;
         HexTile neighborTile;
         float damageApplied;
@@ -157,21 +159,22 @@ public class Lupus : Canis, IGameChar
 
             if (target != null)
             {
-                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
+                // Add Bravery check (*1.5 attack input)
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
                 target.ReceiveDamage(damageApplied);
-            }
-            else
-            {
-                AddReward(-1f);
+
+                if (!UnitInTargetList(target))
+                    AddReward(-1f);
+                else
+                    AddReward(1f);
+
+                return;
             }
         }
-        else
-        {
-            //Debug.Log(Name + " attacked " + dir + "and failed!");
 
-            AddReward(-1f);
-        }
-
+        // Position at dir has no occupier!
+        // Position at dir has no tile!
+        AddReward(-0.5f);
     }
 
     void Move(int dir)
@@ -187,28 +190,28 @@ public class Lupus : Canis, IGameChar
             if (!destinationTile.Occupied)
             {
                 destination = destinationTile.Position;
-                gameObject.GetComponent<Rigidbody>().position = HexCalculator.CharacterPosition(destination);
+
+                Vector3 igPosition = HexCalculator.CharacterPosition(destination);
+                gameObject.GetComponent<Rigidbody>().position = igPosition;
+                gameObject.transform.position = igPosition;
 
                 BattleMap_.mapTiles[InGamePosition].EmptyTile();
 
                 InGamePosition = destination;
                 destinationTile.Occupier = this;
 
-                // -------------------------------
-                //Debug.Log(Name + " moved " + dir + "!");
+                return;
             }
         }
-        else
-        {
-            Debug.Log(Name + " could NOT move!");
 
-            AddReward(-1f);
-        }
+        // Position at dir has no tile to move at!
+        // Position at dir is occupied!
+        AddReward(-0.5f);
     }
 
     void Defend(int dir)
     {
-        //Debug.Log(Name + " defended!");
+        AddReward(-0.1f);
     }
 
     // ---------------------------------------------------------------------------------------
@@ -218,6 +221,7 @@ public class Lupus : Canis, IGameChar
     public override void ReceiveDamage(float amount)
     {
         //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
+        AddReward(-0.5f);
 
         // Get the new health percentage left on target
         SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
@@ -229,6 +233,7 @@ public class Lupus : Canis, IGameChar
         if (GetStatValueByName("HP") <= 0)
         {
             Die();
+            AddReward(-5.0f);
         }
     }
 
@@ -239,7 +244,11 @@ public class Lupus : Canis, IGameChar
 
         IsActive = false;
         gameObject.SetActive(false);
-        SetReward(-5f);
+    }
+
+    public override void Win()
+    {
+        AddReward(5f);
     }
 
     public override void ResetStats()
@@ -248,4 +257,5 @@ public class Lupus : Canis, IGameChar
 
         OnHealthChanged(100);
     }
+
 }

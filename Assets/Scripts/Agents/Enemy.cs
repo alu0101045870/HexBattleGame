@@ -74,6 +74,11 @@ public abstract class Enemy : GameCharacter
     /*                                    SENSOR METHODS                                    */
     // ---------------------------------------------------------------------------------------
 
+    protected Vector2Int ClosestObjective(List<GameCharacter> detectedEnemies)
+    {
+        return HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
+    }
+
     /// <summary>
     /// Checks one tile ahead in every direction in search for enemies
     /// </summary>
@@ -112,7 +117,7 @@ public abstract class Enemy : GameCharacter
         if (detectedEnemies.Count <= 0)
             return -1;
 
-        Vector2Int preyPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
+        Vector2Int preyPosition = ClosestObjective(detectedEnemies);
         HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
         HexTile neighbor;
 
@@ -137,7 +142,7 @@ public abstract class Enemy : GameCharacter
         if (detectedEnemies.Count <= 0)
             return -1;
 
-        Vector2Int predPosition = HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
+        Vector2Int predPosition = ClosestObjective(detectedEnemies);
         HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
         HexTile neighbor;
 
@@ -172,15 +177,15 @@ public abstract class Enemy : GameCharacter
                     // if tile is occupied by an enemy or prey
                     if (OccupierInTargetList(neighbor))
                     {
-                        adjacencySensor.Add(1f);            // target at dir
+                        adjacencySensor.Add(0.5f);            // target at dir
                     }
                     else if (OccupierInPredatorList(neighbor))
                     {
-                        adjacencySensor.Add(2f);
+                        adjacencySensor.Add(1f);
                     }
                     else
                     {
-                        adjacencySensor.Add(-1f);           // no target at dir, but not empty
+                        adjacencySensor.Add(-0.5f);           // no target at dir, but not empty
                     }
                 }
                 else
@@ -219,6 +224,31 @@ public abstract class Enemy : GameCharacter
         return proximitySensor;
     }
 
+    protected float DistanceTowardsClosestPredator()
+    {
+        List<GameCharacter> detectedEnemies = PredatorsInSightSensor(); //
+
+        // Choose most inminent predator: proximity criteria
+        if (detectedEnemies.Count <= 0)
+            return -1;
+
+        Vector2Int predPosition = ClosestObjective(detectedEnemies);
+
+        return HexCalculator.OffsetDistance(InGamePosition, predPosition);
+    }
+
+    protected float DistanceTowardsClosestTarget()
+    {
+        List<GameCharacter> detectedEnemies = ObjectivesInSightSensor();
+
+        // Choose most desirable prey: proximity criteria
+        if (detectedEnemies.Count <= 0)
+            return -1;
+
+        Vector2Int preyPosition = ClosestObjective(detectedEnemies);
+
+        return HexCalculator.OffsetDistance(InGamePosition, preyPosition);
+    }
 
     protected List<GameCharacter> PredatorsInSightSensor()                // ------------------------ TODO: Sight perception sensor implementation
     {

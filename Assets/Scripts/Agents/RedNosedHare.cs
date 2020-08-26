@@ -17,13 +17,7 @@ public class RedNosedHare : Leporidae, IGameChar
 
     private void InitAgent()
     {
-        InitStatValues();                               // Stat initialization
-        InitStatusEffects();
         SetParameters();
-
-        // TickSpeed & LastSkillRank (default 3)
-        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
-        LastSkillRank = 3;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -32,8 +26,15 @@ public class RedNosedHare : Leporidae, IGameChar
 
     public override void SetParameters()
     {
-        SetStatValues(78, 6, 2, 21, 10, 1, 2, 65, 0);
+        InitStatValues();                               // Stat initialization
+        InitStatusEffects();
+
+        SetStatValues(78, 3, 2, 21, 10, 1, 1, 65, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
+
+        // TickSpeed & LastSkillRank (default 3)
+        TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
+        LastSkillRank = 3;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -61,7 +62,7 @@ public class RedNosedHare : Leporidae, IGameChar
         if (StatusEffects.Count == 0 && StatValues.Count == 0)
         {
             InitAgent();
-            Debug.Log(Academy.Instance.EpisodeCount);
+            //Debug.Log(Academy.Instance.EpisodeCount);
         }
     }
 
@@ -72,6 +73,8 @@ public class RedNosedHare : Leporidae, IGameChar
         sensor.AddObservation(AdjacencySensor());
 
         sensor.AddObservation(ProximitySensor());
+
+        sensor.AddObservation(DistanceTowardsClosestPredator());
     }
 
     public override void Heuristic(float[] action)
@@ -126,8 +129,7 @@ public class RedNosedHare : Leporidae, IGameChar
                 }
         }
 
-        AddReward(-0.1f);
-
+        AddReward(-0.01f);
         ActionOver = true;
     }
 
@@ -147,6 +149,7 @@ public class RedNosedHare : Leporidae, IGameChar
     void Attack(int dir)
     {
         // Calculate damage on target
+        const int ATTACK_DMG_CONSTANT = 16;
         GameCharacter target;
         HexTile neighborTile;
         float damageApplied;
@@ -157,21 +160,20 @@ public class RedNosedHare : Leporidae, IGameChar
 
             if (target != null)
             {
-                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), 16, target.GetStatValueByName("RES"));
+                // Add Bravery check (*1.5 attack input)
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
                 target.ReceiveDamage(damageApplied);
-            }
-            else
-            {
-                AddReward(-1f);
+
+                if (!UnitInTargetList(target)) 
+                    AddReward(-1f);
+
+                return;
             }
         }
-        else
-        {
-            //Debug.Log(Name + " attacked " + dir + "and failed!");
 
-            AddReward(-1f);
-        }
-
+        // Position at dir has no occupier!
+        // Position at dir has no tile!
+        AddReward(-0.5f);
     }
 
     void Move(int dir)
@@ -197,20 +199,21 @@ public class RedNosedHare : Leporidae, IGameChar
                 InGamePosition = destination;
                 destinationTile.Occupier = this;
 
-                // -------------------------------
-                //Debug.Log(Name + " moved " + dir + "!");
+                return;
             }
         }
-        else
-        {
-            // Debug.Log(Name + " could NOT move!");
-            AddReward(-1f);
-        }
+        
+        // Position at dir has no tile to move at!
+        // Position at dir is occupied!
+        AddReward(-0.5f);
     }
 
     void Defend(int dir)
     {
-        Debug.Log(Name + " defended!");
+        // if (IsAdjacentTo("Leporidae"))
+        //      Heal
+
+        AddReward(-0.01f);
     }
 
     // ---------------------------------------------------------------------------------------
@@ -220,6 +223,7 @@ public class RedNosedHare : Leporidae, IGameChar
     public override void ReceiveDamage(float amount)
     {
         //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
+        AddReward(-0.5f);
 
         // Get the new health percentage left on target
         SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
@@ -231,6 +235,7 @@ public class RedNosedHare : Leporidae, IGameChar
         if (GetStatValueByName("HP") <= 0)
         {
             Die();
+            AddReward(-5.0f);
         }
     }
 
@@ -241,13 +246,19 @@ public class RedNosedHare : Leporidae, IGameChar
 
         IsActive = false;
         gameObject.SetActive(false);
-        SetReward(-5f);
+    }
+
+    public override void Win()
+    {
+        AddReward(5f);
     }
 
     public override void ResetStats()
     {
         SetParameters();
 
-        OnHealthChanged(100);
+        // Healthbar is actually "independent" from HP parameter 
+        // so it needs a reset too
+        OnHealthChanged(100); 
     }
 }
