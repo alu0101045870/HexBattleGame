@@ -9,7 +9,6 @@ public abstract class Enemy : GameCharacter
 {
     protected List<string> targetList_ = new List<string>();
     protected List<string> predatorList_ = new List<string>();
-
     public Enemy(IEnumerable<string> targetList, IEnumerable<string> predatorList)
     {
         targetList_.AddRange(targetList);
@@ -279,6 +278,49 @@ public abstract class Enemy : GameCharacter
 
         return objectives;
     }
+
+    // ---------------------------------------------------------------------------------------
+    /*                                     AGENT METHODS                                    */
+    // ---------------------------------------------------------------------------------------
+
+    public override void RequestAct()
+    {
+        ActionOver = false;
+        RequestDecision();
+    }
+
+    public override void Initialize()
+    {
+        gameObject.tag = "Enemy";
+        ActionOver = false;
+    }
+
+    public override void Reset()
+    {
+        IsActive = false;
+        gameObject.SetActive(false);
+
+        //Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
+        EndEpisode();
+    }
+
+    // ---------------------------------------------------------------------------------------
+    /*                                 BATTLE LOOP EVENTS                                   */
+    // ---------------------------------------------------------------------------------------
+
+    public override void Die()
+    {
+        Caroussel_.actionInfo.WhoDied_.Add(ID);
+        BattleMap_.factions[FactionID][ID] = false;
+
+        IsActive = false;
+        gameObject.SetActive(false);
+    }
+
+    public override void Win()
+    {
+        AddReward(5f);
+    }
 }
 
 public abstract class Canis : Enemy
@@ -289,6 +331,79 @@ public abstract class Canis : Enemy
     }
 
     // ---------------------------------------------------------------------------------------
+    /*                                  AGENT ACTION METHODS                                */
+    // ---------------------------------------------------------------------------------------
+
+    protected void Attack(int dir)
+    {
+        // Calculate damage on target
+        const int ATTACK_DMG_CONSTANT = 16;
+        GameCharacter target;
+        HexTile neighborTile;
+        float damageApplied;
+
+        if (BattleMap_.mapTiles.TryGetValue(HexCalculator.GetNeighborAtDir(InGamePosition, dir), out neighborTile))
+        {
+            target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+
+            if (target != null)
+            {
+                // Add Bravery check (*1.5 attack input)
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
+                target.ReceiveDamage(damageApplied);
+
+                if (!UnitInTargetList(target))
+                    AddReward(-1f);
+                else
+                    AddReward(1f);
+
+                return;
+            }
+        }
+
+        // Position at dir has no occupier!
+        // Position at dir has no tile!
+        AddReward(-0.5f);
+    }
+
+    protected void Move(int dir)
+    {
+        // First, check if movement is possible
+        // - Does the destination tile exist?
+        // - Is it free?
+        HexTile destinationTile;
+        Vector2Int destination;
+
+        if (BattleMap_.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
+        {
+            if (!destinationTile.Occupied)
+            {
+                destination = destinationTile.Position;
+
+                Vector3 igPosition = HexCalculator.CharacterPosition(destination);
+                gameObject.GetComponent<Rigidbody>().position = igPosition;
+                gameObject.transform.position = igPosition;
+
+                BattleMap_.mapTiles[InGamePosition].EmptyTile();
+
+                InGamePosition = destination;
+                destinationTile.Occupier = this;
+
+                return;
+            }
+        }
+
+        // Position at dir has no tile to move at!
+        // Position at dir is occupied!
+        AddReward(-0.5f);
+    }
+
+    protected void Defend(int dir)
+    {
+        AddReward(-0.1f);
+    }
+    
+    // ---------------------------------------------------------------------------------------
     /*                                    SENSOR METHODS                                    */
     // ---------------------------------------------------------------------------------------
 }
@@ -298,6 +413,80 @@ public abstract class Leporidae : Enemy
     public Leporidae() : base(new string[] { "Player" }, new string[] { "Canis" })
     { 
         Species = "Leporidae";
+    }
+
+    // ---------------------------------------------------------------------------------------
+    /*                                  AGENT ACTION METHODS                                */
+    // ---------------------------------------------------------------------------------------
+
+    protected void Attack(int dir)
+    {
+        // Calculate damage on target
+        const int ATTACK_DMG_CONSTANT = 16;
+        GameCharacter target;
+        HexTile neighborTile;
+        float damageApplied;
+
+        if (BattleMap_.mapTiles.TryGetValue(HexCalculator.GetNeighborAtDir(InGamePosition, dir), out neighborTile))
+        {
+            target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+
+            if (target != null)
+            {
+                // Add Bravery check (*1.5 attack input)
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
+                target.ReceiveDamage(damageApplied);
+
+                if (!UnitInTargetList(target))
+                    AddReward(-1f);
+
+                return;
+            }
+        }
+
+        // Position at dir has no occupier!
+        // Position at dir has no tile!
+        AddReward(-0.5f);
+    }
+
+    protected void Move(int dir)
+    {
+        // First, check if movement is possible
+        // - Does the destination tile exist?
+        // - Is it free?
+        HexTile destinationTile;
+        Vector2Int destination;
+
+        if (BattleMap_.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
+        {
+            if (!destinationTile.Occupied)
+            {
+                destination = destinationTile.Position;
+
+                Vector3 igPosition = HexCalculator.CharacterPosition(destination);
+                gameObject.GetComponent<Rigidbody>().position = igPosition;
+                gameObject.transform.position = igPosition;
+
+                BattleMap_.mapTiles[InGamePosition].EmptyTile();
+
+                InGamePosition = destination;
+                destinationTile.Occupier = this;
+
+                return;
+            }
+        }
+
+        // Position at dir has no tile to move at!
+        // Position at dir is occupied!
+        AddReward(-0.5f);
+    }
+
+    protected void Defend(int dir)
+    {
+        // if (IsAdjacentTo("Leporidae"))
+        //      Heal
+
+        AddReward(-0.01f);
     }
 
     // ---------------------------------------------------------------------------------------

@@ -41,16 +41,9 @@ public class RedNosedHare : Leporidae, IGameChar
     /*                              AGENT ACTIONS IMPLEMENTATION                            */
     // ---------------------------------------------------------------------------------------
 
-    public override void RequestAct()
-    {
-        ActionOver = false;
-        RequestDecision();
-    }
-
     public override void Initialize()
     {
-        gameObject.tag = "Enemy";
-        ActionOver = false;
+        base.Initialize();
 
         InitAgent();
     }
@@ -59,11 +52,9 @@ public class RedNosedHare : Leporidae, IGameChar
     {
         base.OnEpisodeBegin();
 
-        if (StatusEffects.Count == 0 && StatValues.Count == 0)
-        {
-            InitAgent();
-            //Debug.Log(Academy.Instance.EpisodeCount);
-        }
+        InitAgent();
+        //Debug.Log(Academy.Instance.EpisodeCount);
+        
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -79,7 +70,6 @@ public class RedNosedHare : Leporidae, IGameChar
 
     public override void Heuristic(float[] action)
     {
-
         int dir = TargetInRange();
 
         if (GetStatValueByName("HP") < (Mathf.RoundToInt(MaxHP * 0.35f)))
@@ -100,9 +90,8 @@ public class RedNosedHare : Leporidae, IGameChar
             if (dir != -1)
                 action[1] = dir;
             else
-                action[1] = UnityEngine.Random.Range(0, 5);
+                action[1] = HexCalculator.RandomDir();
         }
-
     }
 
     public override void OnActionReceived(float[] vectorAction)
@@ -133,88 +122,11 @@ public class RedNosedHare : Leporidae, IGameChar
         ActionOver = true;
     }
 
-    public override void Reset()
-    {
-        IsActive = false;
-        gameObject.SetActive(false);
-
-        //Debug.Log(Unity.MLAgents.Academy.Instance.EpisodeCount);
-        EndEpisode();
-    }
-
     // ---------------------------------------------------------------------------------------
     /*                                  AGENT ACTION METHODS                                */
     // ---------------------------------------------------------------------------------------
 
-    void Attack(int dir)
-    {
-        // Calculate damage on target
-        const int ATTACK_DMG_CONSTANT = 16;
-        GameCharacter target;
-        HexTile neighborTile;
-        float damageApplied;
-
-        if (BattleMap_.mapTiles.TryGetValue(HexCalculator.GetNeighborAtDir(InGamePosition, dir), out neighborTile))
-        {
-            target = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
-
-            if (target != null)
-            {
-                // Add Bravery check (*1.5 attack input)
-                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
-                target.ReceiveDamage(damageApplied);
-
-                if (!UnitInTargetList(target)) 
-                    AddReward(-1f);
-
-                return;
-            }
-        }
-
-        // Position at dir has no occupier!
-        // Position at dir has no tile!
-        AddReward(-0.5f);
-    }
-
-    void Move(int dir)
-    {
-        // First, check if movement is possible
-        // - Does the destination tile exist?
-        // - Is it free?
-        HexTile destinationTile;
-        Vector2Int destination;
-
-        if (BattleMap_.mapTiles[InGamePosition].Neighbors.TryGetValue(dir, out destinationTile))
-        {
-            if (!destinationTile.Occupied)
-            {
-                destination = destinationTile.Position;
-
-                Vector3 igPosition = HexCalculator.CharacterPosition(destination);
-                gameObject.GetComponent<Rigidbody>().position = igPosition;
-                gameObject.transform.position = igPosition;
-               
-                BattleMap_.mapTiles[InGamePosition].EmptyTile();
-
-                InGamePosition = destination;
-                destinationTile.Occupier = this;
-
-                return;
-            }
-        }
-        
-        // Position at dir has no tile to move at!
-        // Position at dir is occupied!
-        AddReward(-0.5f);
-    }
-
-    void Defend(int dir)
-    {
-        // if (IsAdjacentTo("Leporidae"))
-        //      Heal
-
-        AddReward(-0.01f);
-    }
+    //
 
     // ---------------------------------------------------------------------------------------
     /*                                 BATTLE LOOP EVENTS                                   */
@@ -237,20 +149,6 @@ public class RedNosedHare : Leporidae, IGameChar
             Die();
             AddReward(-5.0f);
         }
-    }
-
-    public override void Die()
-    {
-        Caroussel_.actionInfo.WhoDied_.Add(ID);
-        BattleMap_.factions[FactionID][ID] = false;
-
-        IsActive = false;
-        gameObject.SetActive(false);
-    }
-
-    public override void Win()
-    {
-        AddReward(5f);
     }
 
     public override void ResetStats()
