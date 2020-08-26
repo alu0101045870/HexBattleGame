@@ -99,7 +99,6 @@ public class Lupus : Canis, IGameChar
         // Exec chosen Skill with given direction
         skills_[(int)vectorAction[0]].Invoke((int)vectorAction[1]);
 
-
         AddReward(-0.1f);
         ActionOver = true;
     }
@@ -137,6 +136,8 @@ public class Lupus : Canis, IGameChar
     {
         SetParameters();
 
+        // Healthbar is actually "independent" from HP parameter 
+        // so it needs a reset too
         OnHealthChanged(100);
     }
 
