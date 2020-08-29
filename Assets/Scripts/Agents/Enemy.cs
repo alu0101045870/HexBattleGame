@@ -15,11 +15,6 @@ public abstract class Enemy : GameCharacter
         predatorList_.AddRange(predatorList);
     }
 
-    public virtual void SetParameters()
-    {
-        throw new NotImplementedException();
-    }
-
     public virtual bool OccupierInPredatorList(HexTile neighbor)
     {
         if (!neighbor.Occupied) return false;

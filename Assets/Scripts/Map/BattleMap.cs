@@ -32,6 +32,8 @@ public class BattleMap : MonoBehaviour
     public List<Dictionary<int, bool>> factions = new List<Dictionary<int, bool>>();
     private List<int> winnerFactions = new List<int>();
 
+    private bool envDone = true;
+
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
     // ---------------------------------------------------------------------------------------
@@ -53,11 +55,16 @@ public class BattleMap : MonoBehaviour
     {
         return delegate ()
         {
-            CleanUpBattleMap();
+            if (envDone)
+            {
+                CleanUpBattleMap();
 
-            InitializeMap();
-            InitializeAgents();         // =>   Initialize agents + their positions
-            InitializeCaroussel();
+                InitializeMap();
+                InitializeAgents();         // =>   Initialize agents + their positions
+                InitializeCaroussel();
+            }
+
+            envDone = false;
         };
     }
 
@@ -256,7 +263,9 @@ public class BattleMap : MonoBehaviour
 
                 //Debug.Log("Max Steps: " + battleUnits_[index].MaxStep + " - Step Count: " + battleUnits_[index].StepCount);
                 // Battle Over condition: MaxStep Reached
+                //Debug.Log(battleUnits_[index].MaxStep + " < " + battleUnits_[index].StepCount);
                 if (stopCondition = (battleUnits_[index].MaxStep < battleUnits_[index].StepCount)) break;
+                
 
                 if (CheckDeaths())
                 {
@@ -371,7 +380,10 @@ public class BattleMap : MonoBehaviour
             battleUnits_[i].Reset();
         }
 
+        envDone = true;
         Academy.Instance.EnvironmentReset();
+        
+        Debug.Log(Academy.Instance.EpisodeCount);
     }
 
     void RewardWinners(List<int> winnerFactionID)

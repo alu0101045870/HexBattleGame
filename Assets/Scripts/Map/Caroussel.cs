@@ -168,3 +168,34 @@ public class Caroussel : MonoBehaviour
         }
     }
 }
+
+public class ActionInfo
+{
+    // turn owner
+    // skillrank
+    GameCharacter turnOwner = null;
+    int skillRank_ = 3;
+
+    bool hasteApplied_ = false;
+
+    List<int> whoDied_ = new List<int>();
+
+    public GameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
+    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
+    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
+    public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
+
+    public void Reset()
+    {
+        turnOwner = null;
+        skillRank_ = 3;
+        hasteApplied_ = false;
+        whoDied_.Clear();
+    }
+
+    //   ~~ IDEAS ~~          => Unsure as to where this should be implemented
+    // Damage applied:
+    // Damage receiver:
+    // Damage taken:
+    // Status/Stats change
+}

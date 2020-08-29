@@ -6,18 +6,11 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class Lupus : Canis, IGameChar
+public class Lupus : Canis
 {
-    public event Action<float> OnHealthChanged = delegate { };
-
     void Awake() 
     {
         Name = "Lupus";    
-    }
-
-    private void InitAgent()
-    {
-        SetParameters();
     }
 
     // ---------------------------------------------------------------------------------------
@@ -26,8 +19,11 @@ public class Lupus : Canis, IGameChar
 
     public override void SetParameters()
     {
-        InitStatValues();                               // Stat initialization
-        InitStatusEffects();
+        if (StatValues.Count <= 0 && StatusEffects.Count <= 0)
+        {
+            InitStatValues();                               // Stat initialization
+            InitStatusEffects();
+        }
 
         SetStatValues(78, 7, 1, 21, 1, 2, 1, 59, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
@@ -45,16 +41,15 @@ public class Lupus : Canis, IGameChar
     {
         base.Initialize();
 
-        InitAgent();
+        SetParameters();
     }
 
     public override void OnEpisodeBegin()
     {
         base.OnEpisodeBegin();
 
-        InitAgent();
+        SetParameters();
         //Debug.Log(Academy.Instance.EpisodeCount);
-        
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -112,33 +107,5 @@ public class Lupus : Canis, IGameChar
     // ---------------------------------------------------------------------------------------
     /*                                 BATTLE LOOP EVENTS                                   */
     // ---------------------------------------------------------------------------------------
-
-    public override void ReceiveDamage(float amount)
-    {
-        //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
-        AddReward(-0.5f);
-
-        // Get the new health percentage left on target
-        SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
-        float percentageLeft = Mathf.Clamp((float)GetStatValueByName("HP"), 0, MaxHP) / (float)MaxHP;
-
-        // Update calling target's healthbar delegate
-        OnHealthChanged(percentageLeft);
-
-        if (GetStatValueByName("HP") <= 0)
-        {
-            Die();
-            AddReward(-5.0f);
-        }
-    }
-
-    public override void ResetStats()
-    {
-        SetParameters();
-
-        // Healthbar is actually "independent" from HP parameter 
-        // so it needs a reset too
-        OnHealthChanged(100);
-    }
 
 }

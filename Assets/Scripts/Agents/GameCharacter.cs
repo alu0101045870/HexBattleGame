@@ -4,45 +4,10 @@ using System.Collections.Generic;
 using Unity.MLAgents;
 using UnityEngine;
 
-public class ActionInfo
-{
-    // turn owner
-    // skillrank
-    GameCharacter turnOwner = null;
-    int skillRank_ = 3;
-
-    bool hasteApplied_ = false;
-
-    List<int> whoDied_ = new List<int>();
-
-    public GameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
-    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
-    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
-    public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
-
-    public void Reset()
-    {
-        turnOwner = null;
-        skillRank_ = 3;
-        hasteApplied_ = false;
-        whoDied_.Clear();
-    }
-
-    //   ~~ IDEAS ~~          => Unsure as to where this should be implemented
-    // Damage applied:
-    // Damage receiver:
-    // Damage taken:
-    // Status/Stats change
-}
-
-
-public interface IGameChar
-{
-    event Action<float> OnHealthChanged;
-}
-
 public abstract class GameCharacter : Agent
 {
+    public event Action<float> OnHealthChanged = delegate { };
+
     private bool actionOver = false;
     private string species_ = "";
     private string name_ = "";
@@ -192,6 +157,8 @@ public abstract class GameCharacter : Agent
         return value;
     }
 
+    public abstract void SetParameters();
+
     public virtual void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
     {
         maxHP_ = lps;
@@ -231,9 +198,33 @@ public abstract class GameCharacter : Agent
 
     public abstract void Lose();
 
-    public abstract void ReceiveDamage(float amount);
+    public virtual void ReceiveDamage(float amount)
+    {
+        //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
+        AddReward(-0.5f);
+
+        // Get the new health percentage left on target
+        SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
+        float percentageLeft = Mathf.Clamp((float)GetStatValueByName("HP"), 0, MaxHP) / (float)MaxHP;
+
+        // Update calling target's healthbar delegate
+        OnHealthChanged(percentageLeft);
+
+        if (GetStatValueByName("HP") <= 0)
+        {
+            Die();
+            AddReward(-5.0f);
+        }
+    }
+
+    public virtual void ResetStats()
+    {
+        SetParameters();
+
+        // Healthbar is actually "independent" from HP parameter 
+        // so it needs a reset too
+        OnHealthChanged(100);
+    }
 
     public abstract void Reset();
-
-    public abstract void ResetStats();
 }
