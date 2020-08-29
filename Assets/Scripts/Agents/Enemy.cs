@@ -321,6 +321,11 @@ public abstract class Enemy : GameCharacter
     {
         AddReward(5f);
     }
+
+    public override void Lose()
+    {
+        AddReward(-5f);
+    }
 }
 
 public abstract class Canis : Enemy

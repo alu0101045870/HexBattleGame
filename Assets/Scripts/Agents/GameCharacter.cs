@@ -229,6 +229,8 @@ public abstract class GameCharacter : Agent
 
     public abstract void Win();
 
+    public abstract void Lose();
+
     public abstract void ReceiveDamage(float amount);
 
     public abstract void Reset();

@@ -254,11 +254,15 @@ public class BattleMap : MonoBehaviour
                 yield return new WaitUntil(() => battleUnits_[index].ActionOver);
                 yield return new WaitForSeconds(1f);
 
+                //Debug.Log("Max Steps: " + battleUnits_[index].MaxStep + " - Step Count: " + battleUnits_[index].StepCount);
+                // Battle Over condition: MaxStep Reached
+                if (stopCondition = (battleUnits_[index].MaxStep < battleUnits_[index].StepCount)) break;
+
                 if (CheckDeaths())
                 {
                     recalcTurns = true;
 
-                    // Battle Over condition: Faction Supremacy
+                    // Battle Over condition: Faction Supremacy 
                     if (stopCondition = FactionSupremacy(out winnerFactions)) break;
                 }
             }
@@ -372,11 +376,25 @@ public class BattleMap : MonoBehaviour
 
     void RewardWinners(List<int> winnerFactionID)
     {
+        // No winners!
+        if (winnerFactionID.Count <= 0)
+        {
+            for (int i = 0; i < battleUnits_.Count; i++)
+            {
+                battleUnits_[i].Lose();
+            }
+
+            return;
+        }
+
+        // At least one faction won!
         for (int i = 0; i < battleUnits_.Count; i++)
         {
-            for(int j = 0; j < winnerFactionID.Count; j++)
+            for (int j = 0; j < winnerFactionID.Count; j++)
                 if (battleUnits_[i].FactionID.Equals(winnerFactions[j]))
                     battleUnits_[i].Win();
+                else
+                    battleUnits_[i].Lose();
         }
     }
 }
