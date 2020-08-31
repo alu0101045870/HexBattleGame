@@ -41,13 +41,13 @@ public class RedNosedHare : Leporidae
     {
         base.Initialize();
 
-        SetParameters();
     }
 
     public override void OnEpisodeBegin()
     {
         base.OnEpisodeBegin();
 
+        SetParameters();
         //Debug.Log(Academy.Instance.EpisodeCount);  
     }
 

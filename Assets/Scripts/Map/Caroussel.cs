@@ -49,7 +49,7 @@ public class Caroussel : MonoBehaviour
 
             cv = battleUnits[i].CounterValue = StatCalculator.CalculateCounter(tickspeed, lastskillR, hasteStatus);
 
-            preCalcValues.Add(i, new Vector3Int(cv, lastskillR, (int) hasteStatus));
+            preCalcValues.Add(i, new Vector3Int(cv, lastskillR, (int)hasteStatus));
         }
     }
 
@@ -63,14 +63,10 @@ public class Caroussel : MonoBehaviour
         // Clear previous list
         ClearPreviousQueue();
 
-        // TODO: Store current countervalues and lastskillranks
-
         while (currentlyCaltulatedTurns < PRE_CALCULATED_TURNS)
         {
             SetNextTurn(GetNextTurnIndex());
             currentlyCaltulatedTurns++;
-
-            // decrease 
         }
 
     }

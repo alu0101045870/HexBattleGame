@@ -201,6 +201,7 @@ public class BattleMap : MonoBehaviour
                 battleUnits_.Add(agent);
                 agent.ID = battleUnits_.Count - 1;
                 agent.FactionID = factions.Count - 1;
+                agent.IsActive = true;
 
                 agent.BattleMap_ = this;
                 agent.Caroussel_ = this.caroussel;
