@@ -48,7 +48,6 @@ public class Lupus : Canis
     {
         base.OnEpisodeBegin();
 
-        SetParameters();
         //Debug.Log(Academy.Instance.EpisodeCount);
     }
 

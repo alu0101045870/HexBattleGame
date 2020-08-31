@@ -55,6 +55,14 @@ public class BattleMap : MonoBehaviour
     {
         return delegate ()
         {
+            // Ensure all agents are active
+            for (int i = 0; i < battleUnits_.Count; i++)
+            {
+                battleUnits_[i].GameObject().SetActive(true);
+                battleUnits_[i].IsActive = true;
+                battleUnits_[i].ResetStats();
+            }
+
             if (envDone)
             {
                 CleanUpBattleMap();
@@ -155,7 +163,10 @@ public class BattleMap : MonoBehaviour
         InstantiateFaction(enemyFaction_1_Prefabs, new int[] { 1 });
         InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 1 });
         InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
+
+        //Deb();
     }
+
 
     void InstantiateFaction(List<GameObject> factionPrefabs, int[] NUM_AGENTS)
     {
@@ -207,14 +218,6 @@ public class BattleMap : MonoBehaviour
         int[] spawnIndex = new int[] { -1, -1, -1, -1 };
         int factionID;
 
-        // Ensure all agents are active
-        for (int i = 0; i < battleUnits_.Count; i++)
-        {
-            battleUnits_[i].GameObject().SetActive(true);
-            battleUnits_[i].IsActive = true;
-            battleUnits_[i].ResetStats();
-        }
-
         // Randomly shuffle the spawnList in-place to give enemies a spawn position
         for (int i = 0; i < spawnableTiles_.Count; i++)
             Utils.FisherYatesShuffle<Vector2Int>(spawnableTiles_[i]);
@@ -226,6 +229,7 @@ public class BattleMap : MonoBehaviour
             go = agent.GameObject();
 
             factionID = agent.FactionID;
+            factions[factionID][agent.ID] = true;
             spawntiles = spawnableTiles_[factionID];
 
             agent.InGamePosition = spawntiles[++spawnIndex[factionID]];
@@ -263,7 +267,6 @@ public class BattleMap : MonoBehaviour
 
                 //Debug.Log("Max Steps: " + battleUnits_[index].MaxStep + " - Step Count: " + battleUnits_[index].StepCount);
                 // Battle Over condition: MaxStep Reached
-                //Debug.Log(battleUnits_[index].MaxStep + " < " + battleUnits_[index].StepCount);
                 if (stopCondition = (battleUnits_[index].MaxStep < battleUnits_[index].StepCount)) break;
                 
 
@@ -343,11 +346,11 @@ public class BattleMap : MonoBehaviour
                 livingfactions.Add(i);
         }
 
-        //Debug.Log("Living factions: " + livingfactions);
-
         if (livingfactions.Count == 1)
         {
             winnerFactions.Add(livingfactions[0]);
+            
+            Debug.Log("Winner Faction: " + winnerFactions[0]);
             return true;
         }
 
@@ -382,8 +385,6 @@ public class BattleMap : MonoBehaviour
 
         envDone = true;
         Academy.Instance.EnvironmentReset();
-        
-        Debug.Log(Academy.Instance.EpisodeCount);
     }
 
     void RewardWinners(List<int> winnerFactionID)
