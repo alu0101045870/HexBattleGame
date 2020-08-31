@@ -43,6 +43,9 @@ public abstract class Enemy : GameCharacter
 
     public virtual bool UnitInPredatorList(GameCharacter igc)
     {
+        if (!igc.IsActive) 
+            return false;
+
         for (int i = 0; i < predatorList_.Count; i++)
         {
             if (igc.Species.Equals(predatorList_[i]))
@@ -54,6 +57,9 @@ public abstract class Enemy : GameCharacter
 
     public virtual bool UnitInTargetList(GameCharacter igc)
     {
+        if (!igc.IsActive)
+            return false;
+     
         for (int i = 0; i < targetList_.Count; i++)
         {
             if (igc.Species.Equals(targetList_[i]))
@@ -310,6 +316,7 @@ public abstract class Enemy : GameCharacter
 
         IsActive = false;
         gameObject.SetActive(false);
+        BattleMap_.mapTiles[InGamePosition].EmptyTile();
     }
 
     public override void Win()

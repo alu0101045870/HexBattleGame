@@ -72,5 +72,15 @@ public class TrainingArea : MonoBehaviour
 
             cameraList_[currentCameraIndex].enabled = true;
         }
+        else if (Input.GetKeyDown(KeyCode.Z))
+        {
+            cameraList_[currentCameraIndex].enabled = false;
+
+            if (--currentCameraIndex < 0)
+                currentCameraIndex = cameraList_.Length - 1;
+
+            cameraList_[currentCameraIndex].enabled = true;
+        }
+
     }
 }

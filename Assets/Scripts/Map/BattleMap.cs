@@ -161,7 +161,7 @@ public class BattleMap : MonoBehaviour
         InstantiateFaction(playableCharPrefabs, new int[] { 1, 1, 1, 1 });
 
         InstantiateFaction(enemyFaction_1_Prefabs, new int[] { 1 });
-        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 1 });
+        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 2 });
         InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
 
         //Deb();
