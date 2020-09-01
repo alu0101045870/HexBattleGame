@@ -92,7 +92,7 @@ public class Lupus : Canis
     public override void OnActionReceived(float[] vectorAction)
     {
         // Exec chosen Skill with given direction
-        skills_[(int)vectorAction[0]].Invoke((int)vectorAction[1]);
+        skills_[(int)vectorAction[0]].Item1.Invoke((int)vectorAction[1]);
 
         AddReward(-0.1f);
         ActionOver = true;

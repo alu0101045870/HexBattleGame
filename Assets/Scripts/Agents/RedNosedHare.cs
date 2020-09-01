@@ -91,7 +91,7 @@ public class RedNosedHare : Leporidae
     public override void OnActionReceived(float[] vectorAction)
     {
         // Exec chosen Skill with given direction
-        skills_[(int)vectorAction[0]].Invoke((int)vectorAction[1]);
+        skills_[(int)vectorAction[0]].Item1.Invoke((int)vectorAction[1]);
 
         AddReward(-0.01f);
         ActionOver = true;

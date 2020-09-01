@@ -332,22 +332,22 @@ public abstract class Enemy : GameCharacter
 
 public abstract class Canis : Enemy
 {
-    protected List<Action<int>> skills_ = new List<Action<int>>();
+    protected List<Tuple<Action<int>, int>> skills_ = new List<Tuple<Action<int>, int>>();
 
     public Canis() : base(new string[] { "Player", "Leporidae" }, new string[] { "Abomination" })
     {
         Species = "Canis";
 
-        skills_.Add(Attack);        //[0]
-        skills_.Add(Move);          //[1]
-        skills_.Add(Defend);        //[2]
+        skills_.Add(new Tuple<Action<int>, int> (Attack, 3));        //[0]
+        skills_.Add(new Tuple<Action<int>, int>(Move, 3));          //[1]
+        skills_.Add(new Tuple<Action<int>, int>(Defend, 2));        //[2]
     }
 
     // ---------------------------------------------------------------------------------------
     /*                                  AGENT ACTION METHODS                                */
     // ---------------------------------------------------------------------------------------
 
-    protected void Attack(int dir)
+    void Attack(int dir)
     {
         // Calculate damage on target
         const int ATTACK_DMG_CONSTANT = 16;
@@ -379,7 +379,7 @@ public abstract class Canis : Enemy
         AddReward(-0.5f);
     }
 
-    protected void Move(int dir)
+    void Move(int dir)
     {
         // First, check if movement is possible
         // - Does the destination tile exist?
@@ -411,7 +411,7 @@ public abstract class Canis : Enemy
         AddReward(-0.5f);
     }
 
-    protected void Defend(int dir)
+    void Defend(int dir)
     {
         AddReward(-0.1f);
     }
@@ -423,15 +423,15 @@ public abstract class Canis : Enemy
 
 public abstract class Leporidae : Enemy
 {
-    protected List<Action<int>> skills_ = new List<Action<int>>();
+    protected List<Tuple<Action<int>, int>> skills_ = new List<Tuple<Action<int>, int>>();
 
     public Leporidae() : base(new string[] { "Player" }, new string[] { "Canis" })
     { 
         Species = "Leporidae";
 
-        skills_.Add(Attack);        //[0]
-        skills_.Add(Move);          //[1]
-        skills_.Add(Defend);        //[2]
+        skills_.Add(new Tuple<Action<int>, int>(Attack, 3));        //[0]
+        skills_.Add(new Tuple<Action<int>, int> (Move, 3));          //[1]
+        skills_.Add(new Tuple<Action<int>, int>(Defend, 2));        //[2]
     }
 
     // ---------------------------------------------------------------------------------------
