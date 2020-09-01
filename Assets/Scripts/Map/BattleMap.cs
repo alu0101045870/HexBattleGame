@@ -249,7 +249,6 @@ public class BattleMap : MonoBehaviour
     IEnumerator TrainingLoop()
     {
         bool stopCondition = false;
-        bool recalcTurns = false;
         int index;
 
         while (!stopCondition)
@@ -268,25 +267,19 @@ public class BattleMap : MonoBehaviour
                 // Training Over condition: MaxStep Reached
                 if (stopCondition = (battleUnits_[index].MaxStep < battleUnits_[index].StepCount)) break;
 
-                if (CheckCarousselTriggerEvents())
+                if (caroussel.CheckCarousselTriggerEvents())
                 {
-                    recalcTurns = true;
-
                     // Battle Over condition: Faction Supremacy 
                     if (stopCondition = FactionSupremacy(out winnerFactions)) break;
                 }
             }
 
+            // After-Turn events (poison, etc) should be triggered here <======
+
             if (!stopCondition)
             {
+                battleUnits_[index].SynthethiseSkillRanks();
                 caroussel.PassTurn();
-
-                if (recalcTurns)
-                {
-                    // Re-calculate turns
-                    caroussel.PreCalculateTurns();
-                    recalcTurns = false;
-                }
             }
             else
             {
@@ -297,13 +290,6 @@ public class BattleMap : MonoBehaviour
 
             caroussel.actionInfo.Reset();
         }
-    }
-    
-
-    bool CheckCarousselTriggerEvents()
-    {   
-        // At least one unit died                      or there was a re-calc trigger issued towards the caroussel
-        return (caroussel.actionInfo.WhoDied_.Count > 0) || (caroussel.actionInfo.StatusTriggerApplied_);
     }
 
     private bool FactionLives(Dictionary<int, bool> faction)

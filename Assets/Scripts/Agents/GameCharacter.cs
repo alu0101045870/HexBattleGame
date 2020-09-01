@@ -18,10 +18,11 @@ public abstract class GameCharacter : Agent
     private int tickspeed_;
     private int counterValue_;
     private int maxHP_;
-    private int lastSkillRank_;
     private bool isActive_ = true;
+    private int lastSkillRank_;
+    protected List<int> skillRanks = new List<int>();
 
-    private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
+    private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                                      /* Range 0 - 255 */
     private Dictionary<string, Pair<float, int>> statusEffects_ = new Dictionary<string, Pair<float, int>>();         /* 0.5f - 1f - 2f */ 
 
     private BattleMap battleMap;
@@ -227,4 +228,23 @@ public abstract class GameCharacter : Agent
     }
 
     public abstract void Reset();
+
+    public virtual void SynthethiseSkillRanks()
+    {
+        if (skillRanks.Count <= 0) {
+            LastSkillRank = 3;
+            return;
+        }
+
+        int maxRank = skillRanks[0];
+
+        for (int i = 1; i < skillRanks.Count; i++)
+        {
+            if (skillRanks[i] > maxRank)
+                maxRank = skillRanks[i];
+        }
+
+        LastSkillRank = maxRank;
+        skillRanks.Clear();
+    }
 }

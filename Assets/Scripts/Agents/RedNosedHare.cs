@@ -92,6 +92,7 @@ public class RedNosedHare : Leporidae
     {
         // Exec chosen Skill with given direction
         skills_[(int)vectorAction[0]].Item1.Invoke((int)vectorAction[1]);
+        skillRanks.Add(skills_[(int)vectorAction[0]].Item2);
 
         AddReward(-0.01f);
         ActionOver = true;

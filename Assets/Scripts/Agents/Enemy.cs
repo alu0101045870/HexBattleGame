@@ -9,6 +9,8 @@ public abstract class Enemy : GameCharacter
 {
     protected List<string> targetList_ = new List<string>();
     protected List<string> predatorList_ = new List<string>();
+    protected List<Tuple<Action<int>, int>> skills_ = new List<Tuple<Action<int>, int>>();
+
     public Enemy(IEnumerable<string> targetList, IEnumerable<string> predatorList)
     {
         targetList_.AddRange(targetList);
@@ -332,8 +334,6 @@ public abstract class Enemy : GameCharacter
 
 public abstract class Canis : Enemy
 {
-    protected List<Tuple<Action<int>, int>> skills_ = new List<Tuple<Action<int>, int>>();
-
     public Canis() : base(new string[] { "Player", "Leporidae" }, new string[] { "Abomination" })
     {
         Species = "Canis";
@@ -423,8 +423,6 @@ public abstract class Canis : Enemy
 
 public abstract class Leporidae : Enemy
 {
-    protected List<Tuple<Action<int>, int>> skills_ = new List<Tuple<Action<int>, int>>();
-
     public Leporidae() : base(new string[] { "Player" }, new string[] { "Canis" })
     { 
         Species = "Leporidae";

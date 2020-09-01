@@ -133,16 +133,15 @@ public class Caroussel : MonoBehaviour
         // second, actually dequeue from the unity gameObject
         Destroy(gameObject.transform.GetChild(0).GetChild(0).gameObject);
 
-        // TODO: then, check for the TURN INFORMATION (store in caroussel_r)
-
         // if => haste has been applied     
         //       skill rank has changed (not 3)
         //       a character has [died, fell asleep, been incapacitated]
         // then: re-calculate the full queue
-
+        if (CheckCarousselTriggerEvents()) PreCalculateTurns();
+        
         // else: calculate and assign next turn
-        SetNextTurn(GetNextTurnIndex());
-
+        else SetNextTurn(GetNextTurnIndex());
+        
         // UI refreshes on Update
     }
 
@@ -157,6 +156,12 @@ public class Caroussel : MonoBehaviour
         {
             Destroy(panel.GetChild(i).gameObject);
         }
+    }
+
+    public bool CheckCarousselTriggerEvents()
+    {
+        // At least one unit died                      or there was a re-calc trigger issued towards the caroussel
+        return (actionInfo.WhoDied_.Count > 0) || (actionInfo.StatusTriggerApplied_);
     }
 }
 
