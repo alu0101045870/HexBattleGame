@@ -241,8 +241,7 @@ public class BattleMap : MonoBehaviour
 
     void InitializeCaroussel()
     {
-        caroussel.CalculateICVs();
-        caroussel.PreCalculateTurns();
+        caroussel.Init();
     }
 
     

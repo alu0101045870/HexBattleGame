@@ -158,7 +158,15 @@ public abstract class GameCharacter : Agent
 
         return value;
     }
+    public virtual int GetStatusCounterByName(string name)
+    {
+        Pair<float, int> value;
 
+        if (!statusEffects_.TryGetValue(name, out value))
+            throw new KeyNotFoundException();
+
+        return value.Second;
+    }
     public abstract void SetParameters();
 
     public virtual void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
@@ -190,8 +198,15 @@ public abstract class GameCharacter : Agent
     public virtual void DecreaseStatusCounters()
     {
         foreach (string key in statusEffects_.Keys)
-            if (!statusEffects_[key].First.Equals(1f)) 
+        {
+            if (!statusEffects_[key].First.Equals(1f))
+            {
                 statusEffects_[key].Second--;
+                if (statusEffects_[key].Second <= 0)
+                    statusEffects_[key].First = 1f;
+                    // TOTO: Also, trigger some kind of visual event maybe?
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------------------

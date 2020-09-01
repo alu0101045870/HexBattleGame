@@ -19,13 +19,85 @@ public class Caroussel : MonoBehaviour
 
     // Key: Name of the enemy | Pair: number of enemies of said species in battle   (?)
     private Dictionary<string, int> enemyNames = new Dictionary<string, int>();
-    private List<bool> firstTurnRoundCheck = new List<bool>();
+    
+    private List<bool> defaultTurnsToBeAssigned = new List<bool>();
+    private List<Pair<float, int>> hasteCounters = new List<Pair<float, int>>();
+    private List<int> counterValues = new List<int>();
 
     public ActionInfo actionInfo = new ActionInfo();
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
     // ---------------------------------------------------------------------------------------
+
+    public void Init()
+    {
+        InitDefaultTurns();
+        InitHasteCounters();
+        InitForwardCounterValues();
+        
+        CalculateICVs();
+        PreCalculateTurns();
+    }
+
+    private void InitDefaultTurns()
+    {
+        defaultTurnsToBeAssigned.Clear();
+        
+        for (int i = 0; i < battleMap.battleUnits_.Count; i++)
+        {
+            defaultTurnsToBeAssigned.Add(false);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>true: if there are non-default turns left to be assigned - false: otherwise </returns>
+    private bool NonDefaultTurnsToBeAssigned()
+    {
+        for (int i = 0; i < defaultTurnsToBeAssigned.Count; i++)
+        {
+            if (!defaultTurnsToBeAssigned[i]) return true;
+        }
+
+        return false;
+    }
+
+    private void InitHasteCounters()
+    {
+        float haste;
+        int counter; 
+
+        for (int i = 0; i < battleMap.battleUnits_.Count; i++)
+        {
+            haste = battleMap.battleUnits_[i].GetStatusEffectByName("HASTE");
+            counter = battleMap.battleUnits_[i].GetStatusCounterByName("HASTE");
+            hasteCounters.Add(new Pair<float, int>(haste, counter));
+        }
+    }
+
+    private void DecreaseForwardHasteCounter(int unitIndex)
+    {
+        if (!hasteCounters[unitIndex].Equals(1f)) {
+            
+            hasteCounters[unitIndex].Second--;
+
+            if (hasteCounters[unitIndex].Second <= 0)
+            {
+                hasteCounters[unitIndex].Second = 0;
+                hasteCounters[unitIndex].First = 1f;
+            } 
+        }
+    }
+
+    private void InitForwardCounterValues()
+    {
+        for (int i = 0; i < battleMap.battleUnits_.Count; i++)
+        {
+            counterValues.Add(0);    
+        }
+    }
 
     /// <summary>
     /// Calculate ICV of each battleUnit. Method meant to be called from the BattleMap at the start of each episode
@@ -35,7 +107,7 @@ public class Caroussel : MonoBehaviour
     {
         List<GameCharacter> battleUnits = battleMap.battleUnits_;
 
-        int cv, tickspeed, lastskillR;
+        int tickspeed, lastskillR;
         float hasteStatus;
 
         for (int i = 0; i < battleUnits.Count; i++)
@@ -44,7 +116,7 @@ public class Caroussel : MonoBehaviour
             lastskillR = battleUnits[i].LastSkillRank;
             hasteStatus = battleUnits[i].GetStatusEffectByName("HASTE");
 
-            cv = battleUnits[i].CounterValue = StatCalculator.CalculateCounter(tickspeed, lastskillR, hasteStatus);
+            counterValues[i] = battleUnits[i].CounterValue = StatCalculator.CalculateCounter(tickspeed, lastskillR, hasteStatus);
         }
     }
 
@@ -57,104 +129,20 @@ public class Caroussel : MonoBehaviour
 
         // Clear previous turn queue
         ClearPreviousQueue();
+        ResetDefaultTurns();
+        ReSetForwardCounterValues();
 
         // 
         // Calculate a "first round" of turns 
         // For the current LastSkillRanks
-
-        // If there are any turns left to pre-calc, do so
-
-        // Else, keep the check flag active so order is maintained in 
-        // forward SetTurn routine
-
         while (currentlyCaltulatedTurns < PRE_CALCULATED_TURNS)
         {
-            SetNextTurn(GetNextTurnIndex());
+            SetNextTurn(CalculateNextTurn());
             currentlyCaltulatedTurns++;
         }
 
-    }
-
-    private int GetNextTurnIndex()
-    {
-        List<GameCharacter> battleUnits = battleMap.battleUnits_;
-        int index = 0;
-        bool foundzero = false;
-
-        // we check for 0 values too so we potentially save some comp. time
-        for (int i = 1; i < battleUnits.Count; i++)
-        {
-            if (battleUnits[i].IsActive)
-            {       // => not dead, [asleep or incapacitated]
-                if (battleUnits[i].CounterValue < battleUnits[index].CounterValue)
-                {
-                    index = i;
-
-                    if (battleUnits[index].CounterValue == 0)
-                    {
-                        foundzero = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!foundzero)
-        {
-            for (int i = 0; i < battleUnits.Count; i++)
-            {
-                if (battleUnits[i].IsActive)       // => not dead, [asleep or incapacitated]
-                    battleUnits[i].CounterValue -= battleUnits[index].CounterValue;
-            }
-        }
-
-        return index;
-    }
-
-    private void SetNextTurn(int index)
-    {
-        Transform contentPanel = transform.GetChild(0).transform;
-        GameObject go = Instantiate(entryPrefab, contentPanel);
-
-        go.GetComponent<ICarousselEntry>().SetTurnOwner(index, battleMap.battleUnits_[index].Name);
-
-        entries_.Enqueue(go.GetComponent<ICarousselEntry>());
-
-        battleMap.battleUnits_[index].CounterValue = StatCalculator.CalculateCounter(
-                battleMap.battleUnits_[index].TickSpeed,
-                battleMap.battleUnits_[index].LastSkillRank,
-                battleMap.battleUnits_[index].GetStatusEffectByName("HASTE")
-                );
-
-        battleMap.battleUnits_[index].LastSkillRank = 3;
-    }
-
-    public int NextTurnOwner()
-    {
-        return entries_.Peek().GetTurnOwner();
-    }
-
-    public void PassTurn()
-    {
-        // Decrease status effects of current turn owner
-        actionInfo.TurnOwner.DecreaseStatusCounters();
-
-        // Dequeue the first turn entry
-        entries_.Dequeue();
-
-        // second, actually dequeue from the unity gameObject
-        Destroy(gameObject.transform.GetChild(0).GetChild(0).gameObject);
-
-        // if => haste has been applied     
-        //       skill rank has changed (not 3)
-        //       a character has [died, fell asleep, been incapacitated]
-        // then: re-calculate the full queue
-        if (CheckCarousselTriggerEvents()) PreCalculateTurns();
-        
-        // else: calculate and assign next turn
-        else SetNextTurn(GetNextTurnIndex());
-
-        // UI refreshes on Update
+        // check flag is active => order is maintained in 
+        // forward SetTurn routine
     }
 
     private void ClearPreviousQueue()
@@ -170,10 +158,146 @@ public class Caroussel : MonoBehaviour
         }
     }
 
+    private void ResetDefaultTurns()
+    {
+        for (int i = 0; i < defaultTurnsToBeAssigned.Count; i++)
+        {
+            defaultTurnsToBeAssigned[i] = false;
+        }
+    }
+
+    /// <summary>
+    /// Sets Forward Counter Values in caroussel to match with actual units' Counter Values
+    /// </summary>
+    private void ReSetForwardCounterValues()
+    {
+        for (int i = 0; i < battleMap.battleUnits_.Count; i++)
+        {
+            counterValues[i] = battleMap.battleUnits_[i].CounterValue;
+        }
+    }
+
+    private Pair<int, int> CalculateNextTurn()
+    {
+        List<GameCharacter> battleUnits = battleMap.battleUnits_;
+        int index = 0;
+        bool turnFound = false;
+
+        // remember to check isActive
+        while (!turnFound)
+        {
+            for (int i = 0; i < battleUnits.Count; i++)
+            {
+                if (battleUnits[i].IsActive && counterValues[i] <= 0 && !turnFound)
+                {
+                    turnFound = true;
+                    index = i;
+                }
+
+                counterValues[i]--;
+            }
+        }
+
+        if (NonDefaultTurnsToBeAssigned())
+        {
+            defaultTurnsToBeAssigned[index] = true;
+            return new Pair<int, int>(index, battleUnits[index].LastSkillRank);
+        }
+        else
+        {
+            // Queue a default skillRank turn
+            return new Pair<int, int>(index, 3);
+        }
+    }
+
+    private void SetNextTurn(Pair<int, int> index_rank)
+    {
+        Transform contentPanel = transform.GetChild(0).transform;
+        GameObject go = Instantiate(entryPrefab, contentPanel);
+
+        go.GetComponent<ICarousselEntry>().SetTurnOwner(index_rank.First, battleMap.battleUnits_[index_rank.First].Name);
+
+        entries_.Enqueue(go.GetComponent<ICarousselEntry>());
+
+        counterValues[index_rank.First] = StatCalculator.CalculateCounter(
+                battleMap.battleUnits_[index_rank.First].TickSpeed,
+                index_rank.Second,
+                hasteCounters[index_rank.First].First
+                );
+
+        // Decrease Forward Haste Counter after assignment
+        DecreaseForwardHasteCounter(index_rank.First);
+    }
+
+    public int NextTurnOwner()
+    {
+        return entries_.Peek().GetTurnOwner();
+    }
+
+    public void PassTurn()
+    {
+        // Decrease status effects of current turn owner
+        actionInfo.TurnOwner.DecreaseStatusCounters();
+        UpdateCounterValues();
+
+        // Dequeue the first turn entry
+        entries_.Dequeue();
+
+        // second, actually dequeue from the unity gameObject
+        Destroy(gameObject.transform.GetChild(0).GetChild(0).gameObject);
+
+        // if => haste has been applied     
+        //       skill rank has changed (not 3)
+        //       a character has [died, fell asleep, been incapacitated]
+        // then: re-calculate the full queue
+        if (CheckCarousselTriggerEvents())
+        {
+            Debug.Log("In");
+            PreCalculateTurns();
+        }
+        // else: calculate and assign next turn
+        else SetNextTurn(CalculateNextTurn());
+
+        // UI refreshes on Update
+    }
     public bool CheckCarousselTriggerEvents()
     {
         // At least one unit died                      or there was a re-calc trigger issued towards the caroussel
         return (actionInfo.WhoDied_.Count > 0) || (actionInfo.StatusTriggerApplied_);
+    }
+
+    /// <summary>
+    /// Effectively passes the turn from the perspective of the battle units.
+    /// Their counter values will now reflect the last performed action in-game
+    /// </summary>
+    private void UpdateCounterValues()
+    {
+        List<GameCharacter> battleUnits = battleMap.battleUnits_;
+        int index = 0;
+        bool turnFound = false;
+
+        // remember to check isActive
+        while (!turnFound)
+        {
+            for (int i = 0; i < battleUnits.Count; i++)
+            {
+                if (battleUnits[i].IsActive && battleUnits[i].CounterValue <= 0 && !turnFound)
+                {
+                    turnFound = true;
+                    index = i;
+                }
+
+                battleUnits[i].CounterValue--;
+            }
+        }
+
+        battleUnits[index].CounterValue = StatCalculator.CalculateCounter(
+                battleUnits[index].TickSpeed,
+                battleUnits[index].LastSkillRank,
+                battleUnits[index].GetStatusEffectByName("HASTE")
+                );
+
+
     }
 }
 
