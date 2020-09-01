@@ -19,7 +19,7 @@ public class Caroussel : MonoBehaviour
 
     // Key: Name of the enemy | Pair: number of enemies of said species in battle   (?)
     private Dictionary<string, int> enemyNames = new Dictionary<string, int>();
-
+    private List<bool> firstTurnRoundCheck = new List<bool>();
 
     public ActionInfo actionInfo = new ActionInfo();
 
@@ -55,8 +55,17 @@ public class Caroussel : MonoBehaviour
     {
         int currentlyCaltulatedTurns = 0;
 
-        // Clear previous list
+        // Clear previous turn queue
         ClearPreviousQueue();
+
+        // 
+        // Calculate a "first round" of turns 
+        // For the current LastSkillRanks
+
+        // If there are any turns left to pre-calc, do so
+
+        // Else, keep the check flag active so order is maintained in 
+        // forward SetTurn routine
 
         while (currentlyCaltulatedTurns < PRE_CALCULATED_TURNS)
         {
@@ -127,7 +136,10 @@ public class Caroussel : MonoBehaviour
 
     public void PassTurn()
     {
-        // first, dequeue the first turn entry
+        // Decrease status effects of current turn owner
+        actionInfo.TurnOwner.DecreaseStatusCounters();
+
+        // Dequeue the first turn entry
         entries_.Dequeue();
 
         // second, actually dequeue from the unity gameObject
@@ -141,7 +153,7 @@ public class Caroussel : MonoBehaviour
         
         // else: calculate and assign next turn
         else SetNextTurn(GetNextTurnIndex());
-        
+
         // UI refreshes on Update
     }
 

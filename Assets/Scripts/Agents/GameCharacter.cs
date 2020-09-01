@@ -124,12 +124,13 @@ public abstract class GameCharacter : Agent
         statusEffects_.Add("HASTE", new Pair<float, int>(1f, 0));            // Affects speed calculation
     }
 
-    public virtual void SetStatusEffectByName(string name, Pair<float, int> status)
+    public virtual void SetStatusEffectByName(string name, float value)
     {
         if (!statusEffects_.ContainsKey(name))
             throw new KeyNotFoundException();
 
-        statusEffects_[name] = status;
+        statusEffects_[name].First = value;
+        statusEffects_[name].Second = (value.Equals(1f)) ? 0 : 10;
     }
     public virtual void SetStatValueByName(string name, int value)
     {
@@ -175,16 +176,26 @@ public abstract class GameCharacter : Agent
     }
     public virtual void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
     {
-        SetStatusEffectByName("BRAVERY", new Pair<float, int>(bravery, (bravery.Equals(1f)) ? 0 : 10));
-        SetStatusEffectByName("FAITH", new Pair<float, int>(faith, (faith.Equals(1f)) ? 0 : 10));
-        SetStatusEffectByName("ARMOR", new Pair<float, int>(armor, (armor.Equals(1f)) ? 0 : 10));
-        SetStatusEffectByName("SHIELD", new Pair<float, int>(shield, (shield.Equals(1f)) ? 0 : 10));
-        SetStatusEffectByName("REGEN", new Pair<float, int>(regen, (regen.Equals(1f)) ? 0 : 10));
-        SetStatusEffectByName("HASTE", new Pair<float, int>(haste, (haste.Equals(1f)) ? 0 : 10));
+        SetStatusEffectByName("BRAVERY", bravery);
+        SetStatusEffectByName("FAITH", faith);
+        SetStatusEffectByName("ARMOR", armor);
+        SetStatusEffectByName("SHIELD", shield);
+        SetStatusEffectByName("REGEN", regen);
+        SetStatusEffectByName("HASTE", haste);
+    }
+    
+    /// <summary>
+    ///     Called each Passed Turn from Caroussel
+    /// </summary>
+    public virtual void DecreaseStatusCounters()
+    {
+        foreach (string key in statusEffects_.Keys)
+            if (!statusEffects_[key].First.Equals(1f)) 
+                statusEffects_[key].Second--;
     }
 
     // ---------------------------------------------------------------------------------------
-    /*                               CAROUSSEL ACTION REQUEST                               */
+    /*                                   ACTION REQUEST                                     */
     // ---------------------------------------------------------------------------------------
 
     public abstract void RequestAct();
