@@ -22,7 +22,7 @@ public abstract class GameCharacter : Agent
     private bool isActive_ = true;
 
     private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
-    private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
+    private Dictionary<string, Pair<float, int>> statusEffects_ = new Dictionary<string, Pair<float, int>>();         /* 0.5f - 1f - 2f */ 
 
     private BattleMap battleMap;
     private Caroussel caroussel;
@@ -75,7 +75,7 @@ public abstract class GameCharacter : Agent
     {
         get => statValues_;
     }
-    public virtual Dictionary<string, float> StatusEffects
+    public virtual Dictionary<string, Pair<float, int>> StatusEffects
     {
         get => statusEffects_;
     }
@@ -115,20 +115,20 @@ public abstract class GameCharacter : Agent
     public virtual void InitStatusEffects()
     {
         statusEffects_.Clear();
-        statusEffects_.Add("BRAVERY", 1f);          // Enhances or diminishes strength impact
-        statusEffects_.Add("FAITH", 1f);            // Enhances or diminishes magic impact
-        statusEffects_.Add("ARMOR", 1f);            // Enhances or diminishes resistance
-        statusEffects_.Add("SHIELD", 1f);           // Enhances or diminishes magic resistance
-        statusEffects_.Add("REGEN", 1f);            // Periodically restores LPs
-        statusEffects_.Add("HASTE", 1f);            // Affects speed calculation
+        statusEffects_.Add("BRAVERY", new Pair<float, int>(1f, 0));          // Enhances or diminishes strength impact
+        statusEffects_.Add("FAITH", new Pair<float, int>(1f, 0));            // Enhances or diminishes magic impact
+        statusEffects_.Add("ARMOR", new Pair<float, int>(1f, 0));            // Enhances or diminishes resistance
+        statusEffects_.Add("SHIELD", new Pair<float, int>(1f, 0));           // Enhances or diminishes magic resistance
+        statusEffects_.Add("REGEN", new Pair<float, int>(1f, 0));            // Periodically restores LPs
+        statusEffects_.Add("HASTE", new Pair<float, int>(1f, 0));            // Affects speed calculation
     }
 
-    public virtual void SetStatusEffectByName(string name, float value)
+    public virtual void SetStatusEffectByName(string name, Pair<float, int> status)
     {
         if (!statusEffects_.ContainsKey(name))
             throw new KeyNotFoundException();
 
-        statusEffects_[name] = value;
+        statusEffects_[name] = status;
     }
     public virtual void SetStatValueByName(string name, int value)
     {
@@ -140,12 +140,12 @@ public abstract class GameCharacter : Agent
 
     public virtual float GetStatusEffectByName(string name)
     {
-        float value;
+        Pair<float, int> value;
 
         if (!statusEffects_.TryGetValue(name, out value))
             throw new KeyNotFoundException();
 
-        return value;
+        return value.First;
     }
     public virtual int GetStatValueByName(string name)
     {
@@ -174,12 +174,12 @@ public abstract class GameCharacter : Agent
     }
     public virtual void SetStatusEffects(float bravery, float faith, float armor, float shield, float regen, float haste)
     {
-        SetStatusEffectByName("BRAVERY", bravery);
-        SetStatusEffectByName("FAITH", faith);
-        SetStatusEffectByName("ARMOR", armor);
-        SetStatusEffectByName("SHIELD", shield);
-        SetStatusEffectByName("REGEN", regen);
-        SetStatusEffectByName("HASTE", haste);
+        SetStatusEffectByName("BRAVERY", new Pair<float, int>(bravery, (bravery.Equals(1f)) ? 0 : 10));
+        SetStatusEffectByName("FAITH", new Pair<float, int>(faith, (faith.Equals(1f)) ? 0 : 10));
+        SetStatusEffectByName("ARMOR", new Pair<float, int>(armor, (armor.Equals(1f)) ? 0 : 10));
+        SetStatusEffectByName("SHIELD", new Pair<float, int>(shield, (shield.Equals(1f)) ? 0 : 10));
+        SetStatusEffectByName("REGEN", new Pair<float, int>(regen, (regen.Equals(1f)) ? 0 : 10));
+        SetStatusEffectByName("HASTE", new Pair<float, int>(haste, (haste.Equals(1f)) ? 0 : 10));
     }
 
     // ---------------------------------------------------------------------------------------

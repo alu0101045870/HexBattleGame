@@ -201,7 +201,6 @@ public class BattleMap : MonoBehaviour
                 battleUnits_.Add(agent);
                 agent.ID = battleUnits_.Count - 1;
                 agent.FactionID = factions.Count - 1;
-                agent.IsActive = true;
 
                 agent.BattleMap_ = this;
                 agent.Caroussel_ = this.caroussel;
@@ -266,12 +265,10 @@ public class BattleMap : MonoBehaviour
                 yield return new WaitUntil(() => battleUnits_[index].ActionOver);
                 yield return new WaitForSeconds(1f);
 
-                //Debug.Log("Max Steps: " + battleUnits_[index].MaxStep + " - Step Count: " + battleUnits_[index].StepCount);
-                // Battle Over condition: MaxStep Reached
+                // Training Over condition: MaxStep Reached
                 if (stopCondition = (battleUnits_[index].MaxStep < battleUnits_[index].StepCount)) break;
-                
 
-                if (CheckDeaths())
+                if (CheckCarousselTriggerEvents())
                 {
                     recalcTurns = true;
 
@@ -297,19 +294,16 @@ public class BattleMap : MonoBehaviour
                 RewardWinners(winnerFactions);
                 EpisodeReset();
             }
+
+            caroussel.actionInfo.Reset();
         }
     }
     
 
-    bool CheckDeaths()
-    {
-        if (caroussel.actionInfo.WhoDied_.Count > 0)
-        {
-            caroussel.actionInfo.WhoDied_.Clear();
-            return true;
-        }
-
-        return false;
+    bool CheckCarousselTriggerEvents()
+    {   
+        // At least one unit died                      or there was a re-calc trigger issued towards the caroussel
+        return (caroussel.actionInfo.WhoDied_.Count > 0) || (caroussel.actionInfo.StatusTriggerApplied_);
     }
 
     private bool FactionLives(Dictionary<int, bool> faction)
@@ -327,7 +321,7 @@ public class BattleMap : MonoBehaviour
         // Players are always the firstly introduced faction 
         /*  If the player is dead -> other factions win
             
-        if (!FactionLives(factions[0])) 
+        if (!PlayersLive())) 
         {
             winnerFactions.Add(1);
             winnerFactions.Add(2);

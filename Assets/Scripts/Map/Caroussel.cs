@@ -13,7 +13,6 @@ public class Caroussel : MonoBehaviour
     // ---------------------------------------------------------------------------------------
 
     private const int PRE_CALCULATED_TURNS = 16;
-    private Dictionary<int, Vector3Int> preCalcValues = new Dictionary<int, Vector3Int>();        // Index (battleUnits_) : [CV , lastSkillRank, hasteStatus (counter)]
 
     private Queue<int> turnQueue = new Queue<int>();
     private Queue<ICarousselEntry> entries_ = new Queue<ICarousselEntry>();
@@ -39,8 +38,6 @@ public class Caroussel : MonoBehaviour
         int cv, tickspeed, lastskillR;
         float hasteStatus;
 
-        preCalcValues.Clear();
-
         for (int i = 0; i < battleUnits.Count; i++)
         {
             tickspeed = battleUnits[i].TickSpeed;
@@ -48,8 +45,6 @@ public class Caroussel : MonoBehaviour
             hasteStatus = battleUnits[i].GetStatusEffectByName("HASTE");
 
             cv = battleUnits[i].CounterValue = StatCalculator.CalculateCounter(tickspeed, lastskillR, hasteStatus);
-
-            preCalcValues.Add(i, new Vector3Int(cv, lastskillR, (int)hasteStatus));
         }
     }
 
@@ -170,22 +165,19 @@ public class ActionInfo
     // turn owner
     // skillrank
     GameCharacter turnOwner = null;
-    int skillRank_ = 3;
 
-    bool hasteApplied_ = false;
+    bool statusTriggerApplied_ = false;
 
     List<int> whoDied_ = new List<int>();
 
     public GameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
-    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
-    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
+    public bool StatusTriggerApplied_ { get => statusTriggerApplied_; set => statusTriggerApplied_ = value; }
     public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
 
     public void Reset()
     {
         turnOwner = null;
-        skillRank_ = 3;
-        hasteApplied_ = false;
+        statusTriggerApplied_ = false;
         whoDied_.Clear();
     }
 
