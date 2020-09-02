@@ -166,7 +166,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   battleMapPrefab: {fileID: 8229665072140108255, guid: ceec4e7939a1fef4fa666743d0ede0cd,
     type: 3}
-  numberOfMaps: 2
+  numberOfMaps: 16
   VertOffset: 20
   HorizOffset: 50
 --- !u!1 &705507993

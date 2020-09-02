@@ -47,7 +47,7 @@ public class RedNosedHare : Leporidae
     {
         base.OnEpisodeBegin();
 
-        if (BattleMap_.envDone)
+        if (BattleMap_ != null && BattleMap_.envDone)
             SetParameters();
         //Debug.Log(Academy.Instance.EpisodeCount);  
     }
