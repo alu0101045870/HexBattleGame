@@ -47,7 +47,8 @@ public class RedNosedHare : Leporidae
     {
         base.OnEpisodeBegin();
 
-        SetParameters();
+        if (BattleMap_.envDone)
+            SetParameters();
         //Debug.Log(Academy.Instance.EpisodeCount);  
     }
 
@@ -96,6 +97,13 @@ public class RedNosedHare : Leporidae
 
         AddReward(-0.01f);
         ActionOver = true;
+
+        // Give a reward based on distance towards closest predator
+        // This will encourage the agent to stay away from predators even if it does not 
+        // have a chance to live in the long run
+
+        // The bigger the distance, the bigger the reward
+        AddReward(DistanceTowardsClosestPredator() / 50);       
     }
 
     // ---------------------------------------------------------------------------------------

@@ -148,7 +148,7 @@ MonoBehaviour:
     VectorActionSize: 0300000006000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: 5c0deb1b80bae8b4db4e4b5008c25a98, type: 3}
   m_InferenceDevice: 0
   m_BehaviorType: 0
   m_BehaviorName: Lupus

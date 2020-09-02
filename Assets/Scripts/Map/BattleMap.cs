@@ -32,7 +32,7 @@ public class BattleMap : MonoBehaviour
     public List<Dictionary<int, bool>> factions = new List<Dictionary<int, bool>>();
     private List<int> winnerFactions = new List<int>();
 
-    private bool envDone = true;
+    public bool envDone = true;
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
@@ -161,7 +161,7 @@ public class BattleMap : MonoBehaviour
         InstantiateFaction(playableCharPrefabs, new int[] { 1, 1, 1, 1 });
 
         InstantiateFaction(enemyFaction_1_Prefabs, new int[] { 1 });
-        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 2 });
+        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 1 });
         InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
 
         //Deb();
@@ -330,7 +330,7 @@ public class BattleMap : MonoBehaviour
         {
             winnerFactions.Add(livingfactions[0]);
             
-            Debug.Log("Winner Faction: " + winnerFactions[0]);
+            //Debug.Log("Winner Faction: " + winnerFactions[0]);
             return true;
         }
 

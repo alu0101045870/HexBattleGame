@@ -251,10 +251,8 @@ public class Caroussel : MonoBehaviour
         //       a character has [died, fell asleep, been incapacitated]
         // then: re-calculate the full queue
         if (CheckCarousselTriggerEvents())
-        {
-            Debug.Log("In");
             PreCalculateTurns();
-        }
+        
         // else: calculate and assign next turn
         else SetNextTurn(CalculateNextTurn());
 

@@ -48,7 +48,8 @@ public class Lupus : Canis
     {
         base.OnEpisodeBegin();
 
-        SetParameters();
+        if (BattleMap_.envDone)
+            SetParameters();
         //Debug.Log(Academy.Instance.EpisodeCount);
     }
 

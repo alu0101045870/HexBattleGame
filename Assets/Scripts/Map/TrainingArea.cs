@@ -44,7 +44,7 @@ public class TrainingArea : MonoBehaviour
 
             battleMapList_[k].StartMap();
 
-            if (j >= MAX_COLS)
+            if (j >= MAX_COLS - 1)
             {
                 j = 0;
 
