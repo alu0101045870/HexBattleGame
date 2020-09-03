@@ -246,11 +246,14 @@ public abstract class GameCharacter : Agent
 
     public virtual void ResetStats()
     {
-        SetParameters();
+        if (BattleMap_ != null && BattleMap_.envDone)
+        {
+            SetParameters();
 
-        // Healthbar is actually "independent" from HP parameter 
-        // so it needs a reset too
-        OnHealthChanged(100);
+            // Healthbar is actually "independent" from HP parameter 
+            // so it needs a reset too
+            OnHealthChanged(100);
+        }
     }
 
     public abstract void Reset();

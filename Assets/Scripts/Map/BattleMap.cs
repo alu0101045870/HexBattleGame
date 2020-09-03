@@ -55,16 +55,16 @@ public class BattleMap : MonoBehaviour
     {
         return delegate ()
         {
-            // Ensure all agents are active
-            for (int i = 0; i < battleUnits_.Count; i++)
-            {
-                battleUnits_[i].GameObject().SetActive(true);
-                battleUnits_[i].IsActive = true;
-                battleUnits_[i].ResetStats();
-            }
-
             if (envDone)
             {
+                // Ensure all agents are active
+                for (int i = 0; i < battleUnits_.Count; i++)
+                {
+                    battleUnits_[i].GameObject().SetActive(true);
+                    battleUnits_[i].IsActive = true;
+                    battleUnits_[i].ResetStats();
+                }
+
                 CleanUpBattleMap();
 
                 InitializeMap();
