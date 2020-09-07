@@ -76,6 +76,19 @@ public abstract class Enemy : GameCharacter
     /*                                    SENSOR METHODS                                    */
     // ---------------------------------------------------------------------------------------
 
+    protected int NumberOfLivingAllies()
+    {
+        int numberOfLivingAllies = 0;
+
+        foreach(int id in BattleMap_.factions[FactionID].Keys)
+        {
+            if (id != ID && BattleMap_.factions[FactionID][id])
+                numberOfLivingAllies++;
+        }
+
+        return numberOfLivingAllies;
+    }
+
     protected Vector2Int ClosestObjective(List<GameCharacter> detectedEnemies)
     {
         return HexCalculator.ClosestPosition(InGamePosition, detectedEnemies);
@@ -454,7 +467,9 @@ public abstract class Leporidae : Enemy
                 damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
                 target.ReceiveDamage(damageApplied);
 
-                if (!UnitInTargetList(target))
+                if (UnitInPredatorList(target))
+                    AddReward(0.2f);
+                else if (!UnitInTargetList(target))
                     AddReward(-1f);
 
                 return;
@@ -489,6 +504,13 @@ public abstract class Leporidae : Enemy
                 InGamePosition = destination;
                 destinationTile.Occupier = this;
 
+                // Give a reward based on distance towards closest predator
+                // This will encourage the agent to stay away from predators even if it does not 
+                // have a chance to live in the long run. ALSO, encourages him to move
+
+                // The bigger the distance, the bigger the reward
+                AddReward(DistanceTowardsClosestPredator() / 10);
+
                 return;
             }
         }
@@ -503,7 +525,7 @@ public abstract class Leporidae : Enemy
         // if (IsAdjacentTo("Leporidae"))
         //      Heal
 
-        AddReward(-0.01f);
+        AddReward(-0.1f);
     }
 
     // ---------------------------------------------------------------------------------------

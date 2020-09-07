@@ -32,7 +32,7 @@ public class BattleMap : MonoBehaviour
     public List<Dictionary<int, bool>> factions = new List<Dictionary<int, bool>>();
     private List<int> winnerFactions = new List<int>();
 
-    public bool envDone = true;
+    public volatile bool envDone = true;
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
@@ -82,8 +82,7 @@ public class BattleMap : MonoBehaviour
     /// </summary>
     void InitializeMap()
     {
-        //UnityEngine.Random.Range(0, mapFiles.Count)
-        string[] mapData = mapFiles[1].text.Split(' ', '\n');
+        string[] mapData = mapFiles[UnityEngine.Random.Range(0, 6)].text.Split(' ', '\n');
 
         int maxRow = int.MinValue, maxCol = int.MinValue, minRow = int.MaxValue, minCol = int.MaxValue;
         int row, col;
@@ -161,7 +160,7 @@ public class BattleMap : MonoBehaviour
         InstantiateFaction(playableCharPrefabs, new int[] { 1, 1, 1, 1 });
 
         InstantiateFaction(enemyFaction_1_Prefabs, new int[] { 1 });
-        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 1 });
+        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 2 });
         InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
 
         //Deb();

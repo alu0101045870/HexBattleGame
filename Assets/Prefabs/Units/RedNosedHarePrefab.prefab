@@ -147,9 +147,9 @@ MonoBehaviour:
     VectorActionSize: 0300000006000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: 7169576f524e385459b19b5409391743, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 0
+  m_BehaviorType: 2
   m_BehaviorName: RedNosedHare
   TeamId: 0
   m_UseChildSensors: 1

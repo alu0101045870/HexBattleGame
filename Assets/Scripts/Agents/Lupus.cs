@@ -62,6 +62,8 @@ public class Lupus : Canis
         sensor.AddObservation(ProximitySensor());
 
         sensor.AddObservation(DistanceTowardsClosestTarget());
+
+        // add distance towards closest predator
     }
 
     public override void Heuristic(float[] action)

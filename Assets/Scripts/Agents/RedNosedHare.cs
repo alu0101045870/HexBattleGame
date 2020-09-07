@@ -31,6 +31,9 @@ public class RedNosedHare : Leporidae
         // TickSpeed & LastSkillRank (default 3)
         TickSpeed = StatCalculator.CalculateTickSpeed(GetStatValueByName("AGL"));
         LastSkillRank = 3;
+
+        // settings based on environment parameters
+        // ...
     }
 
     // ---------------------------------------------------------------------------------------
@@ -41,6 +44,7 @@ public class RedNosedHare : Leporidae
     {
         base.Initialize();
 
+        environmentParameters = Academy.Instance.EnvironmentParameters;
     }
 
     public override void OnEpisodeBegin()
@@ -61,6 +65,8 @@ public class RedNosedHare : Leporidae
         sensor.AddObservation(ProximitySensor());
 
         sensor.AddObservation(DistanceTowardsClosestPredator());
+
+        // add distance towards closest target
     }
 
     public override void Heuristic(float[] action)
@@ -95,15 +101,8 @@ public class RedNosedHare : Leporidae
         skills_[(int)vectorAction[0]].Item1.Invoke((int)vectorAction[1]);
         skillRanks.Add(skills_[(int)vectorAction[0]].Item2);
 
-        AddReward(-0.01f);
+        AddReward(-0.1f);
         ActionOver = true;
-
-        // Give a reward based on distance towards closest predator
-        // This will encourage the agent to stay away from predators even if it does not 
-        // have a chance to live in the long run
-
-        // The bigger the distance, the bigger the reward
-        AddReward(DistanceTowardsClosestPredator() / 50);       
     }
 
     // ---------------------------------------------------------------------------------------

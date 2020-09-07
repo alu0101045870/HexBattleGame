@@ -245,6 +245,7 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 291715b295a506243a37989d61f3815f, type: 3}
   - {fileID: 4900000, guid: 544a5f723a405174b9aee1dcedff7d57, type: 3}
   - {fileID: 4900000, guid: e3623ff5e8f81bd4785c8e7033ab6f8c, type: 3}
+  - {fileID: 4900000, guid: 5459cb55b59ff9440932edb99a3b309d, type: 3}
   caroussel: {fileID: 8229665072540733328}
   spawnMarkers:
   - p
@@ -254,6 +255,7 @@ MonoBehaviour:
   OffsetCol: 0
   OffsetRow: 0
   battleUnits_: []
+  envDone: 1
 --- !u!1 &8229665072803646016
 GameObject:
   m_ObjectHideFlags: 0

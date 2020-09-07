@@ -27,6 +27,7 @@ public abstract class GameCharacter : Agent
 
     private BattleMap battleMap;
     private Caroussel caroussel;
+    protected EnvironmentParameters environmentParameters;
 
     // ---------------------------------------------------------------------------------------
     /*                                      PROPERTIES                                      */
