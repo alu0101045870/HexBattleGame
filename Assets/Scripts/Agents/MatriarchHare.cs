@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Random = UnityEngine.Random;
+using System;
 
-public class RedNosedHare : Leporidae
+public class MatriarchHare : Leporidae
 {
     void Awake()
     {
-        Name = "RedNosedHare";
+        Name = "MatriarchHare";
     }
 
     // ---------------------------------------------------------------------------------------
@@ -19,13 +19,16 @@ public class RedNosedHare : Leporidae
 
     public override void SetParameters()
     {
+        // Add unique skills
+        skills_.Add(new Tuple<Action<int>, int>(MothersEmbrace, 4));
+
         if (StatValues.Count <= 0 && StatusEffects.Count <= 0)
         {
             InitStatValues();                               // Stat initialization
             InitStatusEffects();
         }
 
-        SetStatValues(78, 3, 2, 21, 10, 1, 1, 65, 0);
+        SetStatValues(128, 7, 2, 21, 10, 2, 2, 65, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
 
         // TickSpeed & LastSkillRank (default 3)
@@ -33,7 +36,7 @@ public class RedNosedHare : Leporidae
         LastSkillRank = 3;
 
         // settings based on environment parameters
-        // ...
+        // environmentParameters.GetWithDefault("matriarch_skillset", 0.0f);
     }
 
     // ---------------------------------------------------------------------------------------
@@ -70,25 +73,31 @@ public class RedNosedHare : Leporidae
 
     public override void Heuristic(float[] action)
     {
-        int dir = TargetInRange();
+        int attackDir = TargetInRange();
+        int protectDir = AllyInRange();
 
-        if (GetStatValueByName("HP") < (Mathf.RoundToInt(MaxHP * 0.35f)))
+        if (protectDir != -1)           // Prioritizes children protection
+        {
+            action[0] = protectDir;
+            action[1] = 3f;
+        }
+        else if (GetStatValueByName("HP") < (Mathf.RoundToInt(MaxHP * 0.35f)))
         {
             action[0] = -1f;
             action[1] = 2f;         // Defend when hp drops under a certain threshold
         }
-        if (dir != -1)
+        else if (attackDir != -1)
         {
             action[0] = 0f;
-            action[1] = dir;
+            action[1] = attackDir;
         }
         else
         {
             action[0] = 1f;
-            dir = RunnawayDir();
+            attackDir = RunnawayDir();
 
-            if (dir != -1)
-                action[1] = dir;
+            if (attackDir != -1)
+                action[1] = attackDir;
             else
                 action[1] = HexCalculator.RandomDir();
         }
@@ -108,7 +117,32 @@ public class RedNosedHare : Leporidae
     /*                                   AGENT UNIQUE SKILLS                                */
     // ---------------------------------------------------------------------------------------
 
-    // No additional skills
+    void MothersEmbrace (int dir)
+    {
+        GameCharacter ally;
+        HexTile neighborTile;
+
+        if (BattleMap_.mapTiles.TryGetValue(HexCalculator.GetNeighborAtDir(InGamePosition, dir), out neighborTile))
+        {
+            ally = BattleMap_.mapTiles[HexCalculator.GetNeighborAtDir(InGamePosition, dir)].Occupier;
+
+            if (ally != null)
+            {
+                ally.ApplyStatusEffect("ARMOR", 1.5f);
+
+                if (!UnitInFaction(ally))
+                    AddReward(-1f);
+                else
+                    AddReward(1f);
+
+                return;
+            }
+        }
+
+        // Position at dir has no occupier!
+        // Position at dir has no tile!
+        AddReward(-0.5f);
+    }
 
     // ---------------------------------------------------------------------------------------
     /*                                 BATTLE LOOP EVENTS                                   */

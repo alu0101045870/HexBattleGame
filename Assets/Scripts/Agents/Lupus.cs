@@ -25,7 +25,7 @@ public class Lupus : Canis
             InitStatusEffects();
         }
 
-        SetStatValues(78, 7, 1, 21, 1, 2, 1, 59, 0);
+        SetStatValues(78, 7, 1, 21, 1, 2, 2, 59, 0);
         SetStatusEffects(1, 1, 1, 1, 1, 1);
 
         // TickSpeed & LastSkillRank (default 3)

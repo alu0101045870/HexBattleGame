@@ -47,8 +47,8 @@ public class BattleMap : MonoBehaviour
         Academy.Instance.AutomaticSteppingEnabled = false;
         Academy.Instance.OnEnvironmentReset += Initialize();
 
-        InstantiateAgents();
         InstantiatePlayableChars();
+        InstantiateAgents();
 
         Initialize().Invoke();
 
@@ -69,8 +69,8 @@ public class BattleMap : MonoBehaviour
                     battleUnits_[i].ResetStats();
                 }
 
-                faction1config = (int) Academy.Instance.EnvironmentParameters.GetWithDefault("fact1_config", 0.0f);
-                faction2config = (int)Academy.Instance.EnvironmentParameters.GetWithDefault("fact2_config", 0.0f);
+                faction1config = Mathf.RoundToInt(Academy.Instance.EnvironmentParameters.GetWithDefault("fact1_config", 0.0f));
+                faction2config = Mathf.RoundToInt(Academy.Instance.EnvironmentParameters.GetWithDefault("fact2_config", 0.0f));
                 trainingPhase = (int) Academy.Instance.EnvironmentParameters.GetWithDefault("map_config", 3.0f);         
 
                 CleanUpBattleMap();
@@ -173,8 +173,8 @@ public class BattleMap : MonoBehaviour
 
         InstantiateFaction(playableCharPrefabs, new int[] { 1, 1, 1, 1 });
 
-        InstantiateFaction(enemyFaction_1_Prefabs, faction1Instances[UnityEngine.Random.Range(0, faction1config)]);
-        InstantiateFaction(enemyFaction_2_Prefabs, faction2Instances[UnityEngine.Random.Range(0, faction2config)]);
+        InstantiateFaction(enemyFaction_1_Prefabs, faction1Instances[faction1config]);
+        InstantiateFaction(enemyFaction_2_Prefabs, faction2Instances[faction2config]);
         InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
 
         //Deb();
@@ -287,6 +287,7 @@ public class BattleMap : MonoBehaviour
             }
 
             // After-Turn events (poison, etc) should be triggered here <======
+            battleUnits_[index].PostTurnEvents();
 
             if (!stopCondition)
             {

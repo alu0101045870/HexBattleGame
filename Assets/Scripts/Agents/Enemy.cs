@@ -43,6 +43,13 @@ public abstract class Enemy : GameCharacter
         return false;
     }
 
+    public virtual bool OccupierInFaction(HexTile neighbor)
+    {
+        if (!neighbor.Occupied) return false;
+
+        return (neighbor.Occupier.FactionID == FactionID);
+    }
+
     public virtual bool UnitInPredatorList(GameCharacter igc)
     {
         if (!igc.IsActive) 
@@ -69,6 +76,14 @@ public abstract class Enemy : GameCharacter
         }
 
         return false;
+    }
+
+    public virtual bool UnitInFaction(GameCharacter igc)
+    {
+        if (!igc.IsActive)
+            return false;
+
+        return (FactionID == igc.FactionID);
     }
 
 
@@ -109,6 +124,25 @@ public abstract class Enemy : GameCharacter
             if (currentTile.Neighbors.TryGetValue(i, out neighbor))
             {
                 if (OccupierInTargetList(neighbor))
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    protected int AllyInRange()
+    {
+        HexTile currentTile = BattleMap_.mapTiles[InGamePosition];
+        HexTile neighbor;
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (currentTile.Neighbors.TryGetValue(i, out neighbor))
+            {
+                if (OccupierInFaction(neighbor))
                 {
                     return i;
                 }
@@ -374,8 +408,7 @@ public abstract class Canis : Enemy
 
             if (target != null)
             {
-                // Add Bravery check (*1.5 attack input)
-                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"), GetStatusEffectByName("BRAVERY"), target.GetStatusEffectByName("ARMOR"));
                 target.ReceiveDamage(damageApplied);
 
                 if (!UnitInTargetList(target))
@@ -463,8 +496,7 @@ public abstract class Leporidae : Enemy
 
             if (target != null)
             {
-                // Add Bravery check (*1.5 attack input)
-                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"));
+                damageApplied = StatCalculator.PhysicalDmgCalc(GetStatValueByName("STR"), ATTACK_DMG_CONSTANT, target.GetStatValueByName("RES"), GetStatusEffectByName("BRAVERY"), target.GetStatusEffectByName("ARMOR"));
                 target.ReceiveDamage(damageApplied);
 
                 if (UnitInPredatorList(target))
@@ -509,7 +541,7 @@ public abstract class Leporidae : Enemy
                 // have a chance to live in the long run. ALSO, encourages him to move
 
                 // The bigger the distance, the bigger the reward
-                AddReward(DistanceTowardsClosestPredator() / 10);
+                //AddReward(DistanceTowardsClosestPredator() / 10);
 
                 return;
             }

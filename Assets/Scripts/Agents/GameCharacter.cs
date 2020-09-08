@@ -228,6 +228,14 @@ public abstract class GameCharacter : Agent
 
     public abstract void Lose();
 
+    public virtual void ApplyStatusEffect(string name, float mode)
+    {
+        int duration = 10;
+
+        statusEffects_[name].First = mode;
+        statusEffects_[name].Second = duration;
+    }
+
     public virtual void ReceiveDamage(float amount)
     {
         //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
@@ -279,4 +287,22 @@ public abstract class GameCharacter : Agent
         LastSkillRank = maxRank;
         skillRanks.Clear();
     }
+    public virtual void PostTurnEvents()
+    {
+        // Apply poison/regen health changes
+
+        // decresase all non-0 counters in statusEffects
+        // if one gets to 0, set it's status value to 1 (default status)
+        foreach (string key in statusEffects_.Keys)
+        {
+            if (!statusEffects_[key].First.Equals(1f))
+            {
+                if (--statusEffects_[key].Second <= 0)
+                {
+                    statusEffects_[key].First = 1f;
+                }
+            }
+        }
+    }
+
 }

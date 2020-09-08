@@ -118,14 +118,14 @@ public static class StatCalculator
     /// <param name="DmgConst">Damage Constant of the used skill. Every damaging skill in the game has a Damage Constant</param>
     /// <param name="Def">Defensive Stat</param>
     /// <returns> Damage Dealt to unit </returns>
-    public static int PhysicalDmgCalc(float Stat, float DmgConst, float Def)
+    public static int PhysicalDmgCalc(float Stat, float DmgConst, float Def, float braveryFactor, float armorFactor)
     {
         int BaseDmg = PhysicalFormula(Stat, DmgConst);
 
         if (Def < 0 || Def > 255 || BaseDmg < 0)
             return -1;
 
-        return BaseDmgReduction(BaseDmg, Def);
+        return Mathf.RoundToInt(BaseDmgReduction(BaseDmg, Def) * braveryFactor / armorFactor);
     }
 
 
