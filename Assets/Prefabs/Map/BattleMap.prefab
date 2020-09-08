@@ -240,11 +240,11 @@ MonoBehaviour:
   - {fileID: 4696203527417669404, guid: a63f4b30f55c1144987e7bdfc4887fa0, type: 3}
   enemyFaction_3_Prefabs: []
   mapFiles:
-  - {fileID: 4900000, guid: 7dd98e15448b98c429a72c07d175e91d, type: 3}
   - {fileID: 4900000, guid: aa5e001c211b5a748b5b00ff50dffd2a, type: 3}
   - {fileID: 4900000, guid: 291715b295a506243a37989d61f3815f, type: 3}
-  - {fileID: 4900000, guid: 544a5f723a405174b9aee1dcedff7d57, type: 3}
   - {fileID: 4900000, guid: e3623ff5e8f81bd4785c8e7033ab6f8c, type: 3}
+  - {fileID: 4900000, guid: 7dd98e15448b98c429a72c07d175e91d, type: 3}
+  - {fileID: 4900000, guid: 544a5f723a405174b9aee1dcedff7d57, type: 3}
   - {fileID: 4900000, guid: 5459cb55b59ff9440932edb99a3b309d, type: 3}
   caroussel: {fileID: 8229665072540733328}
   spawnMarkers:
@@ -256,6 +256,9 @@ MonoBehaviour:
   OffsetRow: 0
   battleUnits_: []
   envDone: 1
+  trainingPhase: 0
+  faction1config: 0
+  faction2config: 0
 --- !u!1 &8229665072803646016
 GameObject:
   m_ObjectHideFlags: 0

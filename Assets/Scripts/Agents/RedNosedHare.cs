@@ -66,7 +66,7 @@ public class RedNosedHare : Leporidae
 
         sensor.AddObservation(DistanceTowardsClosestPredator());
 
-        // add distance towards closest target
+        sensor.AddObservation(NumberOfLivingAllies());
     }
 
     public override void Heuristic(float[] action)

@@ -33,6 +33,10 @@ public class BattleMap : MonoBehaviour
     private List<int> winnerFactions = new List<int>();
 
     public volatile bool envDone = true;
+    public volatile int trainingPhase = 0;
+    public volatile int faction1config = 0;
+    public volatile int faction2config = 0;
+    // public volatile int faction3config = 0;
 
     // ---------------------------------------------------------------------------------------
     /*                                    CLASS METHODS                                     */
@@ -65,9 +69,13 @@ public class BattleMap : MonoBehaviour
                     battleUnits_[i].ResetStats();
                 }
 
+                faction1config = (int) Academy.Instance.EnvironmentParameters.GetWithDefault("fact1_config", 0.0f);
+                faction2config = (int)Academy.Instance.EnvironmentParameters.GetWithDefault("fact2_config", 0.0f);
+                trainingPhase = (int) Academy.Instance.EnvironmentParameters.GetWithDefault("map_config", 3.0f);         
+
                 CleanUpBattleMap();
 
-                InitializeMap();
+                InitializeMap(trainingPhase);
                 InitializeAgents();         // =>   Initialize agents + their positions
                 InitializeCaroussel();
             }
@@ -77,12 +85,14 @@ public class BattleMap : MonoBehaviour
     }
 
     /// <summary>
-    /// Initializes Map Tiles Based on one Map File chosen at random.
-    /// TODO: Add Spawn positions for enemies / player
+    /// Initializes Map Tiles and Spawn Positions based on a Map File.
+    /// Chosen file range depends on the training phase the environment is in
     /// </summary>
-    void InitializeMap()
+    void InitializeMap(int mapMax)
     {
-        string[] mapData = mapFiles[UnityEngine.Random.Range(0, 6)].text.Split(' ', '\n');
+        if (mapMax > mapFiles.Count) mapMax = mapFiles.Count;
+
+        string[] mapData = mapFiles[UnityEngine.Random.Range(0, mapMax)].text.Split(' ', '\n');
 
         int maxRow = int.MinValue, maxCol = int.MinValue, minRow = int.MaxValue, minCol = int.MaxValue;
         int row, col;
@@ -157,10 +167,14 @@ public class BattleMap : MonoBehaviour
 
     void InstantiateAgents()
     {
+        // Different configurations for training are combinations of faction Instances rolls
+        int[][] faction1Instances = new int[][] { new int[] { 1 }, new int[] { 2 } };
+        int[][] faction2Instances = new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 } };
+
         InstantiateFaction(playableCharPrefabs, new int[] { 1, 1, 1, 1 });
 
-        InstantiateFaction(enemyFaction_1_Prefabs, new int[] { 1 });
-        InstantiateFaction(enemyFaction_2_Prefabs, new int[] { 2 });
+        InstantiateFaction(enemyFaction_1_Prefabs, faction1Instances[UnityEngine.Random.Range(0, faction1config)]);
+        InstantiateFaction(enemyFaction_2_Prefabs, faction2Instances[UnityEngine.Random.Range(0, faction2config)]);
         InstantiateFaction(enemyFaction_3_Prefabs, new int[] { 1 });
 
         //Deb();

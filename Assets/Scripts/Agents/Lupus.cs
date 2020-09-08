@@ -63,6 +63,7 @@ public class Lupus : Canis
 
         sensor.AddObservation(DistanceTowardsClosestTarget());
 
+        sensor.AddObservation(NumberOfLivingAllies());
         // add distance towards closest predator
     }
 
