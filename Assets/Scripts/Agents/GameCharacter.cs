@@ -4,59 +4,32 @@ using System.Collections.Generic;
 using Unity.MLAgents;
 using UnityEngine;
 
-public class ActionInfo
-{
-    // turn owner
-    // skillrank
-    GameCharacter turnOwner = null;
-    int skillRank_ = 3;
-
-    bool hasteApplied_ = false;
-
-    List<int> whoDied_ = new List<int>();
-
-    public GameCharacter TurnOwner { get => turnOwner; set => turnOwner = value; }
-    public int SkillRank_ { get => skillRank_; set => skillRank_ = value; }
-    public bool HasteApplied_ { get => hasteApplied_; set => hasteApplied_ = value; }
-    public List<int> WhoDied_ { get => whoDied_; set => whoDied_ = value; }
-
-    public void Reset()
-    {
-        turnOwner = null;
-        skillRank_ = 3;
-        hasteApplied_ = false;
-        whoDied_.Clear();
-    }
-
-    //   ~~ IDEAS ~~          => Unsure as to where this should be implemented
-    // Damage applied:
-    // Damage receiver:
-    // Damage taken:
-    // Status/Stats change
-}
-
-
-public interface IGameChar
-{
-    event Action<float> OnHealthChanged;
-}
-
 public abstract class GameCharacter : Agent
 {
+    public event Action<float> OnHealthChanged = delegate { };
+
     private bool actionOver = false;
     private string species_ = "";
     private string name_ = "";
     private int id_;
+    private int factionID_;
     private Vector2Int ingame_position_ = new Vector2Int();
 
     private int tickspeed_;
     private int counterValue_;
     private int maxHP_;
-    private int lastSkillRank_;
     private bool isActive_ = true;
+    private int lastSkillRank_;
+    protected List<int> skillRanks = new List<int>();
 
-    private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                /* Range 0 - 255 */
-    private Dictionary<string, float> statusEffects_ = new Dictionary<string, float>();         /* 0.5f - 1f - 2f */
+    private Dictionary<string, int> statValues_ = new Dictionary<string, int>();                                      /* Range 0 - 255 */
+    private Dictionary<string, Pair<float, int>> statusEffects_ = new Dictionary<string, Pair<float, int>>();         /* 0.5f - 1f - 2f */ 
+
+    private BattleMap battleMap;
+    private Caroussel caroussel;
+    
+    protected EnvironmentParameters environmentParameters;
+    public int trainingPhase;                                // Training only
 
     // ---------------------------------------------------------------------------------------
     /*                                      PROPERTIES                                      */
@@ -68,11 +41,19 @@ public abstract class GameCharacter : Agent
     }
     public virtual string Name { 
         get => name_;
-        set => name_ = value;
+        set {
+            name_ = value;
+            gameObject.name = value;
+        }
     }
     public virtual int ID { 
         get => id_; 
         set => id_ = value; 
+    }
+    public virtual int FactionID
+    {
+        get => factionID_;
+        set => factionID_ = value;
     }
     public virtual int TickSpeed {
         get => tickspeed_; 
@@ -98,7 +79,7 @@ public abstract class GameCharacter : Agent
     {
         get => statValues_;
     }
-    public virtual Dictionary<string, float> StatusEffects
+    public virtual Dictionary<string, Pair<float, int>> StatusEffects
     {
         get => statusEffects_;
     }
@@ -110,8 +91,13 @@ public abstract class GameCharacter : Agent
         get => actionOver; 
         set => actionOver = value; 
     }
+    public BattleMap BattleMap_ { get => battleMap; set => battleMap = value; }
+    public Caroussel Caroussel_ { get => caroussel; set => caroussel = value; }
 
-    public abstract GameObject GameObject();
+    public virtual GameObject GameObject()
+    {
+        return gameObject;
+    }
 
     // ---------------------------------------------------------------------------------------
     /*                                    STATS/STATUS                                      */
@@ -133,12 +119,12 @@ public abstract class GameCharacter : Agent
     public virtual void InitStatusEffects()
     {
         statusEffects_.Clear();
-        statusEffects_.Add("BRAVERY", 1f);          // Enhances or diminishes strength impact
-        statusEffects_.Add("FAITH", 1f);            // Enhances or diminishes magic impact
-        statusEffects_.Add("ARMOR", 1f);            // Enhances or diminishes resistance
-        statusEffects_.Add("SHIELD", 1f);           // Enhances or diminishes magic resistance
-        statusEffects_.Add("REGEN", 1f);            // Periodically restores LPs
-        statusEffects_.Add("HASTE", 1f);            // Affects speed calculation
+        statusEffects_.Add("BRAVERY", new Pair<float, int>(1f, 0));          // Enhances or diminishes strength impact
+        statusEffects_.Add("FAITH", new Pair<float, int>(1f, 0));            // Enhances or diminishes magic impact
+        statusEffects_.Add("ARMOR", new Pair<float, int>(1f, 0));            // Enhances or diminishes resistance
+        statusEffects_.Add("SHIELD", new Pair<float, int>(1f, 0));           // Enhances or diminishes magic resistance
+        statusEffects_.Add("REGEN", new Pair<float, int>(1f, 0));            // Periodically restores LPs
+        statusEffects_.Add("HASTE", new Pair<float, int>(1f, 0));            // Affects speed calculation
     }
 
     public virtual void SetStatusEffectByName(string name, float value)
@@ -146,7 +132,8 @@ public abstract class GameCharacter : Agent
         if (!statusEffects_.ContainsKey(name))
             throw new KeyNotFoundException();
 
-        statusEffects_[name] = value;
+        statusEffects_[name].First = value;
+        statusEffects_[name].Second = (value.Equals(1f)) ? 0 : 10;
     }
     public virtual void SetStatValueByName(string name, int value)
     {
@@ -158,12 +145,12 @@ public abstract class GameCharacter : Agent
 
     public virtual float GetStatusEffectByName(string name)
     {
-        float value;
+        Pair<float, int> value;
 
         if (!statusEffects_.TryGetValue(name, out value))
             throw new KeyNotFoundException();
 
-        return value;
+        return value.First;
     }
     public virtual int GetStatValueByName(string name)
     {
@@ -174,6 +161,16 @@ public abstract class GameCharacter : Agent
 
         return value;
     }
+    public virtual int GetStatusCounterByName(string name)
+    {
+        Pair<float, int> value;
+
+        if (!statusEffects_.TryGetValue(name, out value))
+            throw new KeyNotFoundException();
+
+        return value.Second;
+    }
+    public abstract void SetParameters();
 
     public virtual void SetStatValues(int lps, int str, int mag, int res, int m_res, int act, int mov, int agl, int acc)
     {
@@ -197,9 +194,26 @@ public abstract class GameCharacter : Agent
         SetStatusEffectByName("REGEN", regen);
         SetStatusEffectByName("HASTE", haste);
     }
+    
+    /// <summary>
+    ///     Called each Passed Turn from Caroussel
+    /// </summary>
+    public virtual void DecreaseStatusCounters()
+    {
+        foreach (string key in statusEffects_.Keys)
+        {
+            if (!statusEffects_[key].First.Equals(1f))
+            {
+                statusEffects_[key].Second--;
+                if (statusEffects_[key].Second <= 0)
+                    statusEffects_[key].First = 1f;
+                    // TOTO: Also, trigger some kind of visual event maybe?
+            }
+        }
+    }
 
     // ---------------------------------------------------------------------------------------
-    /*                               CAROUSSEL ACTION REQUEST                               */
+    /*                                   ACTION REQUEST                                     */
     // ---------------------------------------------------------------------------------------
 
     public abstract void RequestAct();
@@ -210,9 +224,85 @@ public abstract class GameCharacter : Agent
 
     public abstract void Die();
 
-    public abstract void ReceiveDamage(float amount);
+    public abstract void Win();
+
+    public abstract void Lose();
+
+    public virtual void ApplyStatusEffect(string name, float mode)
+    {
+        int duration = 10;
+
+        statusEffects_[name].First = mode;
+        statusEffects_[name].Second = duration;
+    }
+
+    public virtual void ReceiveDamage(float amount)
+    {
+        //Debug.Log(Name + "'s MaxHP: " + MaxHP + " - damage taken: " + amount);
+        AddReward(-0.5f);
+
+        // Get the new health percentage left on target
+        SetStatValueByName("HP", GetStatValueByName("HP") - (int)amount);
+        float percentageLeft = Mathf.Clamp((float)GetStatValueByName("HP"), 0, MaxHP) / (float)MaxHP;
+
+        // Update calling target's healthbar delegate
+        OnHealthChanged(percentageLeft);
+
+        if (GetStatValueByName("HP") <= 0)
+        {
+            Die();
+            AddReward(-5.0f);
+        }
+    }
+
+    public virtual void ResetStats()
+    {
+        if (BattleMap_ != null && BattleMap_.envDone)
+        {
+            SetParameters();
+
+            // Healthbar is actually "independent" from HP parameter 
+            // so it needs a reset too
+            OnHealthChanged(100);
+        }
+    }
 
     public abstract void Reset();
 
-    public abstract void ResetStats();
+    public virtual void SynthethiseSkillRanks()
+    {
+        if (skillRanks.Count <= 0) {
+            LastSkillRank = 3;
+            return;
+        }
+
+        int maxRank = skillRanks[0];
+
+        for (int i = 1; i < skillRanks.Count; i++)
+        {
+            if (skillRanks[i] > maxRank)
+                maxRank = skillRanks[i];
+        }
+
+        LastSkillRank = maxRank;
+        skillRanks.Clear();
+    }
+    public virtual void PostTurnEvents()
+    {
+        // Apply poison/regen health changes
+
+        // decresase all non-0 counters in statusEffects
+        // if one gets to 0, set it's status value to 1 (default status)
+        foreach (string key in statusEffects_.Keys)
+        {
+            if (!statusEffects_[key].First.Equals(1f))
+            {
+                if (--statusEffects_[key].Second <= 0)
+                {
+                    statusEffects_[key].First = 1f;
+                }
+            }
+        }
+    }
+
 }

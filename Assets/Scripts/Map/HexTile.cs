@@ -5,10 +5,10 @@ using UnityEngine;
 
 public class HexTile : MonoBehaviour
 {
-    private bool occupied_;
-    private GameCharacter occupier_;
-
-    private Vector2Int position;
+    [SerializeField] private bool occupied_;
+    [SerializeField] private GameCharacter occupier_;
+    [SerializeField] private Vector2Int position;
+    
     private Dictionary<int, HexTile> neighbors = new Dictionary<int, HexTile>();
 
     public Vector2Int Position
